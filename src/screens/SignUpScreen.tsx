@@ -1,0 +1,238 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../types';
+import {
+  Colors,
+  Fonts,
+  Spacing,
+  BorderRadius,
+  Shadows,
+} from '../constants/theme';
+
+type Props = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
+
+export default function SignUpScreen({ navigation }: Props) {
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleSignUp = () => {
+    // Mock sign up
+    navigation.replace('MainTabs');
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        style={styles.flex}
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Create Account</Text>
+          <Text style={styles.subtitle}>Join City Watcher today</Text>
+        </View>
+
+        <View style={styles.form}>
+          <View style={styles.nameRow}>
+            <View style={[styles.inputContainer, styles.nameInput]}>
+              <TextInput
+                style={styles.input}
+                placeholder="First name"
+                placeholderTextColor={Colors.textLight}
+                value={firstName}
+                onChangeText={setFirstName}
+              />
+            </View>
+            <View style={[styles.inputContainer, styles.nameInput]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Last name"
+                placeholderTextColor={Colors.textLight}
+                value={lastName}
+                onChangeText={setLastName}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons
+              name="email-outline"
+              size={20}
+              color={Colors.textSecondary}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Email address"
+              placeholderTextColor={Colors.textLight}
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons
+              name="phone-outline"
+              size={20}
+              color={Colors.textSecondary}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone number"
+              placeholderTextColor={Colors.textLight}
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons
+              name="lock-outline"
+              size={20}
+              color={Colors.textSecondary}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              placeholderTextColor={Colors.textLight}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <MaterialCommunityIcons
+              name="lock-check-outline"
+              size={20}
+              color={Colors.textSecondary}
+              style={styles.inputIcon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm password"
+              placeholderTextColor={Colors.textLight}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+            />
+          </View>
+
+          <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+            <Text style={styles.signUpButtonText}>Create Account</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.loginRow}>
+          <Text style={styles.loginText}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.loginLink}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  container: {
+    flexGrow: 1,
+    backgroundColor: Colors.backgroundCream,
+    paddingHorizontal: Spacing.xxl,
+    paddingTop: 60,
+    paddingBottom: Spacing.xxxl,
+  },
+  header: {
+    marginBottom: Spacing.xxxl,
+  },
+  title: {
+    fontSize: Fonts.sizes.xxxl,
+    fontWeight: Fonts.weights.bold,
+    color: Colors.textPrimary,
+  },
+  subtitle: {
+    fontSize: Fonts.sizes.md,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+  },
+  form: {
+    marginBottom: Spacing.xxl,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  nameInput: {
+    flex: 1,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.backgroundWhite,
+    borderRadius: BorderRadius.button,
+    paddingHorizontal: Spacing.lg,
+    height: 52,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  inputIcon: {
+    marginRight: Spacing.md,
+  },
+  input: {
+    flex: 1,
+    fontSize: Fonts.sizes.md,
+    color: Colors.textPrimary,
+  },
+  signUpButton: {
+    backgroundColor: Colors.primaryOrange,
+    borderRadius: BorderRadius.button,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.md,
+    ...Shadows.button,
+  },
+  signUpButtonText: {
+    fontSize: Fonts.sizes.lg,
+    fontWeight: Fonts.weights.bold,
+    color: Colors.textWhite,
+  },
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  loginText: {
+    fontSize: Fonts.sizes.md,
+    color: Colors.textSecondary,
+  },
+  loginLink: {
+    fontSize: Fonts.sizes.md,
+    color: Colors.primaryOrange,
+    fontWeight: Fonts.weights.semiBold,
+  },
+});
