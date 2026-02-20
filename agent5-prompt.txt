@@ -1,0 +1,59 @@
+You are working on the City Watcher React Native (Expo) mobile app in the city-watcher-app repo. The app has been built with 13 screens, navigation, types, theme, and mock data.
+
+YOUR TASK: Add comprehensive tests for the app. Follow these steps:
+
+1. Install testing dependencies:
+   - jest, @testing-library/react-native, @testing-library/jest-native
+   - react-test-renderer, @types/jest
+   - Configure jest in package.json with preset "jest-expo"
+
+2. Create __tests__/ directory at the project root.
+
+3. Write tests for the following:
+
+   a. __tests__/types.test.ts - Type/data validation tests:
+      - Verify all mockReports have valid required fields (id, caseId, category, status, location)
+      - Verify all mockAlerts have valid required fields
+      - Verify statusDisplayMap covers all ReportStatus values
+      - Verify categoryDisplayMap covers all ReportCategory values
+      - Verify mockUser has valid profile and preferences
+
+   b. __tests__/navigation.test.tsx - Navigation tests:
+      - Test that AppNavigator renders without crashing
+      - Test that SplashScreen renders the title "City Watcher"
+      - Test that LoginScreen renders email and password inputs
+      - Test that SignUpScreen renders first name, last name, phone inputs
+
+   c. __tests__/screens/HomeScreen.test.tsx - Home screen tests:
+      - Renders "City Watcher" header text
+      - Renders 3 action cards (Emergency SOS, Report, Live Reports)
+      - Renders recent reports section
+      - Renders recent alerts section
+
+   d. __tests__/screens/EmergencySOSScreen.test.tsx - Emergency tests:
+      - Renders emergency service options (Police, Ambulance, Fire)
+      - Shows SA emergency numbers (10111, 10177)
+      - Shows location warning text
+
+   e. __tests__/screens/ReportsScreen.test.tsx - Reports list tests:
+      - Renders filter options (All, Active, Resolved)
+      - Renders report cards from mock data
+      - Shows case IDs on report cards
+
+   f. __tests__/screens/ReportDetailScreen.test.tsx - Report detail tests:
+      - Renders status timeline
+      - Shows case ID
+      - Shows AI classification info
+
+   g. __tests__/screens/AlertDetailScreen.test.tsx - Alert tests:
+      - Renders alert title
+      - Shows affected radius and resident count
+      - Renders "Yes, I'm affected" button
+
+4. Make sure all tests pass by running: npx jest --no-cache
+
+5. Add a test script to package.json: "test": "jest"
+
+Mock any native modules that need it (e.g., expo-linear-gradient, react-native-safe-area-context). Use jest.mock() at the top of test files.
+
+Create a PR when done.
