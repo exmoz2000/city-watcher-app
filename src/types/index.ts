@@ -215,6 +215,7 @@ export type RootStackParamList = {
   EmergencySOS: undefined;
   ReportDetail: { reportId: string };
   AlertDetail: { alertId: string };
+  Heatmap: undefined;
 };
 
 export type BottomTabParamList = {

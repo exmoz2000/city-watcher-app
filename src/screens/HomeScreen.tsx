@@ -113,6 +113,21 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* City Insights Banner */}
+      <TouchableOpacity
+        style={styles.insightsBanner}
+        onPress={() => navigation.navigate('Heatmap')}
+      >
+        <View style={styles.insightsBannerLeft}>
+          <MaterialCommunityIcons name="map-search" size={24} color={Colors.textWhite} />
+          <View style={{ marginLeft: Spacing.md }}>
+            <Text style={styles.insightsBannerTitle}>City Insights</Text>
+            <Text style={styles.insightsBannerDesc}>View issue heatmap & hotspots</Text>
+          </View>
+        </View>
+        <MaterialCommunityIcons name="chevron-right" size={24} color={Colors.textWhite} />
+      </TouchableOpacity>
+
       {/* Recent Alerts */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -338,6 +353,31 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.xs,
     color: 'rgba(255,255,255,0.85)',
     lineHeight: 14,
+  },
+  insightsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: Spacing.xl,
+    marginBottom: Spacing.xxl,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.card,
+    backgroundColor: '#5B4A9E',
+    ...Shadows.card,
+  },
+  insightsBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  insightsBannerTitle: {
+    fontSize: Fonts.sizes.md,
+    fontWeight: Fonts.weights.bold,
+    color: Colors.textWhite,
+  },
+  insightsBannerDesc: {
+    fontSize: Fonts.sizes.xs,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 2,
   },
   section: {
     paddingHorizontal: Spacing.xl,

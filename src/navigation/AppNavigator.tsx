@@ -20,6 +20,7 @@ import ReportSubmittedScreen from '../screens/ReportSubmittedScreen';
 import EmergencySOSScreen from '../screens/EmergencySOSScreen';
 import ReportDetailScreen from '../screens/ReportDetailScreen';
 import AlertDetailScreen from '../screens/AlertDetailScreen';
+import HeatmapScreen from '../screens/HeatmapScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -38,8 +39,6 @@ function MainTabs() {
         tabBarStyle: {
           backgroundColor: Colors.backgroundWhite,
           borderTopColor: Colors.borderLight,
-          paddingBottom: 4,
-          height: 60,
         },
       }}
     >
@@ -152,6 +151,11 @@ export default function AppNavigator() {
             title: 'Alert Details',
             headerTintColor: Colors.textPrimary,
           }}
+        />
+        <Stack.Screen
+          name="Heatmap"
+          component={HeatmapScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
