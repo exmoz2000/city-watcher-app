@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -164,6 +164,25 @@ export default function AlertDetailScreen({ route }: Props) {
         </View>
       </View>
 
+      {/* Confirm Affected */}
+      {alert.isActive && (
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.affectedButton}>
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={20}
+              color={Colors.textWhite}
+            />
+            <Text style={styles.affectedButtonText}>Yes, I'm affected</Text>
+          </TouchableOpacity>
+          {alert.confirmedCount !== undefined && (
+            <Text style={styles.confirmedText}>
+              {alert.confirmedCount} residents confirmed affected
+            </Text>
+          )}
+        </View>
+      )}
+
       <View style={{ height: Spacing.section }} />
     </ScrollView>
   );
@@ -296,5 +315,26 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  affectedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primaryOrange,
+    borderRadius: BorderRadius.button,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+    ...Shadows.button,
+  },
+  affectedButtonText: {
+    fontSize: Fonts.sizes.lg,
+    fontWeight: Fonts.weights.semiBold,
+    color: Colors.textWhite,
+  },
+  confirmedText: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: Spacing.sm,
   },
 });
