@@ -10,6 +10,13 @@ A React Native mobile application for community-driven city incident reporting a
 - 📊 Real-time alerts and notifications
 - 👤 User profiles and report tracking
 - 🔐 Secure authentication (Login/Signup)
+- 📞 **Municipal Contact Database** - 60+ verified contacts across 3 major SA regions
+  - KwaZulu-Natal (Durban, KwaDukuza, iLembe District)
+  - Western Cape (Cape Town, Stellenbosch, George, and more)
+  - Gauteng (Johannesburg, Ekurhuleni, Tshwane/Pretoria)
+  - Emergency services, utilities, and reporting channels
+  - One-tap calling, email, and WhatsApp integration
+  - Search and filter by region, municipality, or service type
 
 ## Tech Stack
 
@@ -93,13 +100,57 @@ CityWatcher/
 ├── src/
 │   ├── screens/        # App screens
 │   ├── navigation/     # Navigation configuration
-│   ├── constants/      # Theme, colors, mock data
+│   ├── constants/      # Theme, colors, mock data, municipal contacts
 │   └── types/          # TypeScript type definitions
 ├── assets/             # Images and static assets
 ├── docs/               # Documentation
+│   ├── research-brief-kzn-contacts.md      # Research brief
+│   ├── South Africa Major Cities Municipality.md  # Contact database
+│   ├── contacts-integration-guide.md       # Integration guide
+│   └── admin-dashboard-spec.md             # Admin dashboard spec
 ├── control_panel.py    # Python control panel
 └── requirements.txt    # Python dependencies
 ```
+
+## Municipal Contacts Integration
+
+The app includes a comprehensive database of municipal contacts for South Africa's three major metropolitan regions. See `docs/contacts-integration-guide.md` for implementation details.
+
+### Contact Database Features
+
+- **60+ Verified Contacts** from official .gov.za sources (verified Feb 2026)
+- **3 Major Regions**: KZN, Western Cape, Gauteng
+- **Multiple Municipalities**: Durban, Cape Town, Johannesburg, Pretoria, and more
+- **Service Categories**: Emergency, Municipal, Utilities, Reporting
+- **Helper Functions**: Search, filter by region/municipality, get 24/7 services
+- **Multi-language Support**: English, Afrikaans, Zulu, Xhosa, Sotho
+
+### Quick Start with Contacts
+
+```typescript
+import { 
+  MUNICIPAL_CONTACTS, 
+  getEmergencyContacts,
+  searchContacts 
+} from './src/constants/municipalContacts';
+
+// Get all emergency contacts
+const emergencies = getEmergencyContacts();
+
+// Search for water services
+const waterServices = searchContacts('water');
+```
+
+## Admin Dashboard
+
+A Flask-based admin dashboard specification is available in `docs/admin-dashboard-spec.md` for municipalities to track and manage citizen reports. Features include:
+
+- Report management and tracking
+- Interactive map view
+- Analytics and reporting
+- User management
+- Light/Dark theme matching the mobile app
+- RESTful API for mobile app integration
 
 ## Contributing
 

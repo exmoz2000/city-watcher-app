@@ -5,7 +5,22 @@ All notable changes to the CityWatcher project will be documented in this file.
 ## [Unreleased]
 
 ### Added
-- Python-based Control Panel for server management
+- **Municipal Contact Database** (24 Feb 2026)
+  - Comprehensive contact information for 3 major SA regions (KZN, Western Cape, Gauteng)
+  - 60+ verified municipal contacts from official .gov.za sources
+  - Emergency services, municipal departments, and utility contacts
+  - TypeScript data structure with helper functions
+  - Search and filter capabilities by region, municipality, and service type
+  - Integration guide with implementation examples
+  - National emergency numbers (112, 10111, 10177)
+  
+- **Documentation**
+  - Research brief for municipal contact collection
+  - Complete contact database (South Africa Major Cities Municipality.md)
+  - Integration guide with code examples and UI components
+  - Admin dashboard technical specification (Flask + React)
+  
+- **Python-based Control Panel** for server management
   - Dark theme UI with CityWatcher orange accent colors
   - Start/Stop server functionality
   - Tunnel mode support for remote access/showcasing
@@ -16,6 +31,7 @@ All notable changes to the CityWatcher project will be documented in this file.
   - Clear logs functionality
   - Process tracking with PID display
   - Server status indicator (Running/Stopped)
+  
 - Python requirements file (requirements.txt) with psutil dependency
 - README.md with comprehensive project documentation
 - CHANGELOG.md for tracking project changes
