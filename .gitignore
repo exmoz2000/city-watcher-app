@@ -32,6 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
@@ -39,3 +40,29 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.db
+instance/
+
+# Admin dashboard
+admin-dashboard/backend/venv/
+admin-dashboard/backend/instance/
+admin-dashboard/frontend/node_modules/
+admin-dashboard/frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+
+# pytest
+.pytest_cache/
+
+# Private docs
+docs/business-model.md
+docs/recommendations.md
+.kiro/
