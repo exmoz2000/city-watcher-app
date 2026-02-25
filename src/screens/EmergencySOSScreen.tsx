@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList, EmergencyServiceType } from '../types';
 import {
@@ -53,6 +54,7 @@ const emergencyOptions: EmergencyOption[] = [
 ];
 
 export default function EmergencySOSScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [activating, setActivating] = useState<EmergencyServiceType | null>(
     null
   );
@@ -84,7 +86,22 @@ export default function EmergencySOSScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={Colors.emergencyRed}
+          />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Emergency SOS</Text>
+      </View>
+
       {/* Warning Banner */}
       <View style={styles.warningBanner}>
         <MaterialCommunityIcons
@@ -166,6 +183,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.emergencyRedLight,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+  },
+  backButton: {
+    marginRight: Spacing.md,
+  },
+  headerTitle: {
+    fontSize: Fonts.sizes.xl,
+    fontWeight: Fonts.weights.bold,
+    color: Colors.emergencyRed,
   },
   warningBanner: {
     flexDirection: 'row',

@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import MapView, { Heatmap, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Circle } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -64,12 +64,19 @@ export default function HeatmapScreen() {
     mapRef.current?.animateToRegion(CAPE_TOWN_REGION, 500);
   };
 
-  // Transform points for the Heatmap component
-  const weightedPoints = heatmapPoints.map((p) => ({
-    latitude: p.latitude,
-    longitude: p.longitude,
-    weight: p.weight,
-  }));
+  // Get color based on weight
+  const getColorForWeight = (weight: number): string => {
+    if (weight >= 8) return '#C62828'; // High - dark red
+    if (weight >= 6) return '#EF5350'; // Medium-high - red
+    if (weight >= 4) return '#FF8A65'; // Medium - orange
+    if (weight >= 2) return '#FFB74D'; // Low-medium - light orange
+    return '#FFE082'; // Low - yellow
+  };
+
+  // Get radius based on weight
+  const getRadiusForWeight = (weight: number): number => {
+    return weight * 50; // Scale radius by weight
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -130,23 +137,25 @@ export default function HeatmapScreen() {
         <MapView
           ref={mapRef}
           style={styles.map}
-          provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
           initialRegion={CAPE_TOWN_REGION}
           showsUserLocation={false}
           showsCompass={false}
           showsScale
           mapType="standard"
         >
-          <Heatmap
-            points={weightedPoints}
-            radius={40}
-            opacity={0.7}
-            gradient={{
-              colors: ['#FFE082', '#FFB74D', '#FF8A65', '#EF5350', '#C62828'],
-              startPoints: [0.1, 0.25, 0.5, 0.75, 1.0],
-              colorMapSize: 256,
-            }}
-          />
+          {heatmapPoints.map((point, index) => (
+            <Circle
+              key={`heatpoint-${index}`}
+              center={{
+                latitude: point.latitude,
+                longitude: point.longitude,
+              }}
+              radius={getRadiusForWeight(point.weight)}
+              fillColor={getColorForWeight(point.weight) + '40'} // 40 = 25% opacity
+              strokeColor={getColorForWeight(point.weight)}
+              strokeWidth={1}
+            />
+          ))}
         </MapView>
 
         {/* Legend overlay */}

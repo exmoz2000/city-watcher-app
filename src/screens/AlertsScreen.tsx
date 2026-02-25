@@ -144,11 +144,23 @@ export default function AlertsScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Community Alerts</Text>
-        <Text style={styles.subtitle}>
-          {mockAlerts.filter((a) => a.isActive).length} active alerts in your
-          area
-        </Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <MaterialCommunityIcons
+            name="arrow-left"
+            size={24}
+            color={Colors.textPrimary}
+          />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Community Alerts</Text>
+          <Text style={styles.subtitle}>
+            {mockAlerts.filter((a) => a.isActive).length} active alerts in your
+            area
+          </Text>
+        </View>
       </View>
 
       <FlatList
@@ -180,8 +192,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.backgroundCream,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
+  },
+  backButton: {
+    marginRight: Spacing.md,
+  },
+  headerContent: {
+    flex: 1,
   },
   title: {
     fontSize: Fonts.sizes.xxl,

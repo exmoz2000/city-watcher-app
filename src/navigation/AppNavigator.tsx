@@ -128,10 +128,7 @@ export default function AppNavigator() {
           name="EmergencySOS"
           component={EmergencySOSScreen}
           options={{
-            headerShown: true,
-            title: 'Emergency SOS',
-            headerTintColor: Colors.emergencyRed,
-            headerStyle: { backgroundColor: Colors.emergencyRedLight },
+            headerShown: false,
           }}
         />
         <Stack.Screen
