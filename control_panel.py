@@ -416,7 +416,8 @@ class CityWatcherControlPanel:
             self.log("Mobile server already running!")
             return
         self.is_tunnel = False
-        self.mobile_process = self._start_process("npm start", self.base_dir, "Mobile App")
+        cmd = f'"{self.node_exe}" "{self.npm_cli}" start'
+        self.mobile_process = self._start_process(cmd, self.base_dir, "Mobile App")
         if self.mobile_process:
             self.mobile_pid = self.mobile_process.pid
 
@@ -425,7 +426,9 @@ class CityWatcherControlPanel:
             self.log("Mobile server already running!")
             return
         self.is_tunnel = True
-        self.mobile_process = self._start_process("npx expo start --tunnel", self.base_dir, "Mobile Tunnel")
+        npx_cli = os.path.join(os.path.dirname(self.npm_cli), 'npx-cli.js')
+        cmd = f'"{self.node_exe}" "{npx_cli}" expo start --tunnel'
+        self.mobile_process = self._start_process(cmd, self.base_dir, "Mobile Tunnel")
         if self.mobile_process:
             self.mobile_pid = self.mobile_process.pid
 
@@ -439,14 +442,16 @@ class CityWatcherControlPanel:
             self.log("Start the mobile server first!")
             return
         self.log("Opening Android emulator...")
-        subprocess.Popen("npm run android", shell=True, cwd=self.base_dir)
+        cmd = f'"{self.node_exe}" "{self.npm_cli}" run android'
+        subprocess.Popen(cmd, shell=True, cwd=self.base_dir)
 
     def start_web(self):
         if not self.mobile_process or self.mobile_process.poll() is not None:
             self.log("Start the mobile server first!")
             return
         self.log("Opening web browser...")
-        subprocess.Popen("npm run web", shell=True, cwd=self.base_dir)
+        cmd = f'"{self.node_exe}" "{self.npm_cli}" run web'
+        subprocess.Popen(cmd, shell=True, cwd=self.base_dir)
 
     # ── Admin Backend Commands ────────────────────────────────
 
