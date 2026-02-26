@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  TextInput,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -20,15 +23,51 @@ import {
   BorderRadius,
   Shadows,
 } from '../constants/theme';
-import { mockUser, mockReports } from '../constants/mockData';
+import { useAuth } from '../contexts/AuthContext';
+import * as api from '../services/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { user, logout: authLogout } = useAuth();
 
-  const userReports = mockReports.filter((r) => r.userId === mockUser.id);
+  const [editing, setEditing] = useState(false);
+  const [firstName, setFirstName] = useState(user?.profile.firstName ?? '');
+  const [lastName, setLastName] = useState(user?.profile.lastName ?? '');
+  const [phone, setPhone] = useState(user?.phoneNumber ?? '');
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSave = async () => {
+    setSaving(true);
+    setErrorMessage('');
+    try {
+      await api.updateProfile({ firstName, lastName, phone });
+      setEditing(false);
+    } catch (err: any) {
+      setErrorMessage(err?.serverMessage || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authLogout();
+    } catch {
+      // Best effort
+    }
+  };
+
+  if (!user) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primaryOrange} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -39,35 +78,77 @@ export default function ProfileScreen() {
       <View style={styles.profileHeader}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {mockUser.profile.firstName[0]}
-            {mockUser.profile.lastName[0]}
+            {user.profile.firstName[0] ?? ''}
+            {user.profile.lastName[0] ?? ''}
           </Text>
         </View>
-        <Text style={styles.name}>
-          {mockUser.profile.firstName} {mockUser.profile.lastName}
-        </Text>
-        <Text style={styles.email}>{mockUser.email}</Text>
-        <Text style={styles.phone}>{mockUser.phoneNumber}</Text>
+        {editing ? (
+          <View style={styles.editForm}>
+            <TextInput
+              style={styles.editInput}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="First name"
+              placeholderTextColor={Colors.textLight}
+            />
+            <TextInput
+              style={styles.editInput}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Last name"
+              placeholderTextColor={Colors.textLight}
+            />
+            <TextInput
+              style={styles.editInput}
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Phone"
+              placeholderTextColor={Colors.textLight}
+              keyboardType="phone-pad"
+            />
+            {errorMessage ? (
+              <Text style={styles.editError}>{errorMessage}</Text>
+            ) : null}
+            <View style={styles.editButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setEditing(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={saving}>
+                {saving ? (
+                  <ActivityIndicator color={Colors.textWhite} size="small" />
+                ) : (
+                  <Text style={styles.saveButtonText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <>
+            <Text style={styles.name}>
+              {user.profile.firstName} {user.profile.lastName}
+            </Text>
+            <Text style={styles.email}>{user.email}</Text>
+            <Text style={styles.phone}>{user.phoneNumber}</Text>
+            <TouchableOpacity onPress={() => setEditing(true)} style={styles.editProfileButton}>
+              <MaterialCommunityIcons name="pencil" size={16} color={Colors.primaryOrange} />
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       {/* Stats */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{userReports.length}</Text>
+          <Text style={styles.statNumber}>-</Text>
           <Text style={styles.statLabel}>Reports</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>
-            {userReports.filter((r) => r.status === 'resolved').length}
-          </Text>
+          <Text style={styles.statNumber}>-</Text>
           <Text style={styles.statLabel}>Resolved</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNumber}>
-            {userReports.filter(
-              (r) => r.status !== 'resolved' && r.status !== 'closed'
-            ).length}
-          </Text>
+          <Text style={styles.statNumber}>-</Text>
           <Text style={styles.statLabel}>Active</Text>
         </View>
       </View>
@@ -75,7 +156,7 @@ export default function ProfileScreen() {
       {/* Emergency Contacts */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Emergency Contacts</Text>
-        {mockUser.profile.emergencyContacts.map((contact, index) => (
+        {user.profile.emergencyContacts.map((contact, index) => (
           <View key={index} style={styles.contactCard}>
             <View style={styles.contactIcon}>
               <MaterialCommunityIcons
@@ -122,13 +203,13 @@ export default function ProfileScreen() {
               <Text style={styles.preferenceLabel}>Push Notifications</Text>
             </View>
             <Switch
-              value={mockUser.preferences.notificationsEnabled}
+              value={user.preferences.notificationsEnabled}
               trackColor={{
                 false: Colors.borderLight,
                 true: Colors.successGreen + '60',
               }}
               thumbColor={
-                mockUser.preferences.notificationsEnabled
+                user.preferences.notificationsEnabled
                   ? Colors.successGreen
                   : Colors.textLight
               }
@@ -145,13 +226,13 @@ export default function ProfileScreen() {
               <Text style={styles.preferenceLabel}>Location Sharing</Text>
             </View>
             <Switch
-              value={mockUser.preferences.locationSharingEnabled}
+              value={user.preferences.locationSharingEnabled}
               trackColor={{
                 false: Colors.borderLight,
                 true: Colors.successGreen + '60',
               }}
               thumbColor={
-                mockUser.preferences.locationSharingEnabled
+                user.preferences.locationSharingEnabled
                   ? Colors.successGreen
                   : Colors.textLight
               }
@@ -209,7 +290,7 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.signOutButton}
-          onPress={() => navigation.navigate('Login')}
+          onPress={handleLogout}
         >
           <MaterialCommunityIcons
             name="logout"
@@ -265,6 +346,70 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.sm,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  editProfileButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  editProfileText: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.primaryOrange,
+    fontWeight: Fonts.weights.medium,
+  },
+  editForm: {
+    width: '100%',
+    paddingHorizontal: Spacing.xl,
+    marginTop: Spacing.md,
+  },
+  editInput: {
+    backgroundColor: Colors.backgroundWhite,
+    borderRadius: BorderRadius.button,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    paddingHorizontal: Spacing.lg,
+    height: 44,
+    fontSize: Fonts.sizes.md,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+  },
+  editError: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.emergencyRed,
+    marginBottom: Spacing.sm,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.sm,
+  },
+  cancelButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: BorderRadius.button,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButtonText: {
+    fontSize: Fonts.sizes.md,
+    color: Colors.textSecondary,
+    fontWeight: Fonts.weights.medium,
+  },
+  saveButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: BorderRadius.button,
+    backgroundColor: Colors.primaryOrange,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButtonText: {
+    fontSize: Fonts.sizes.md,
+    color: Colors.textWhite,
+    fontWeight: Fonts.weights.semiBold,
   },
   statsRow: {
     flexDirection: 'row',

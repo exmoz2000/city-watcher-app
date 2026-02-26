@@ -3,9 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { ActivityIndicator, View } from 'react-native';
 
 import { RootStackParamList, BottomTabParamList } from '../types';
 import { Colors, Fonts } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
 
 import SplashScreen from '../screens/SplashScreen';
 import LoginScreen from '../screens/LoginScreen';
@@ -95,65 +97,85 @@ function MainTabs() {
 }
 
 export default function AppNavigator() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <NavigationContainer>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.backgroundCream }}>
+          <ActivityIndicator size="large" color={Colors.primaryOrange} />
+        </View>
+      </NavigationContainer>
+    );
+  }
+
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Splash"
         screenOptions={{ headerShown: false }}
       >
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen
-          name="ReportCategory"
-          component={ReportCategoryScreen}
-          options={{
-            headerShown: true,
-            title: 'Report an Issue',
-            headerTintColor: Colors.textPrimary,
-          }}
-        />
-        <Stack.Screen
-          name="ReportForm"
-          component={ReportFormScreen}
-          options={{
-            headerShown: true,
-            title: 'New Report',
-            headerTintColor: Colors.textPrimary,
-          }}
-        />
-        <Stack.Screen name="ReportSubmitted" component={ReportSubmittedScreen} />
-        <Stack.Screen
-          name="EmergencySOS"
-          component={EmergencySOSScreen}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="ReportDetail"
-          component={ReportDetailScreen}
-          options={{
-            headerShown: true,
-            title: 'Report Details',
-            headerTintColor: Colors.textPrimary,
-          }}
-        />
-        <Stack.Screen
-          name="AlertDetail"
-          component={AlertDetailScreen}
-          options={{
-            headerShown: true,
-            title: 'Alert Details',
-            headerTintColor: Colors.textPrimary,
-          }}
-        />
-        <Stack.Screen
-          name="Heatmap"
-          component={HeatmapScreen}
-          options={{ headerShown: false }}
-        />
+        {!user ? (
+          // Auth screens
+          <>
+            <Stack.Screen name="Splash" component={SplashScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+          </>
+        ) : (
+          // Authenticated screens
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen
+              name="ReportCategory"
+              component={ReportCategoryScreen}
+              options={{
+                headerShown: true,
+                title: 'Report an Issue',
+                headerTintColor: Colors.textPrimary,
+              }}
+            />
+            <Stack.Screen
+              name="ReportForm"
+              component={ReportFormScreen}
+              options={{
+                headerShown: true,
+                title: 'New Report',
+                headerTintColor: Colors.textPrimary,
+              }}
+            />
+            <Stack.Screen name="ReportSubmitted" component={ReportSubmittedScreen} />
+            <Stack.Screen
+              name="EmergencySOS"
+              component={EmergencySOSScreen}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="ReportDetail"
+              component={ReportDetailScreen}
+              options={{
+                headerShown: true,
+                title: 'Report Details',
+                headerTintColor: Colors.textPrimary,
+              }}
+            />
+            <Stack.Screen
+              name="AlertDetail"
+              component={AlertDetailScreen}
+              options={{
+                headerShown: true,
+                title: 'Alert Details',
+                headerTintColor: Colors.textPrimary,
+              }}
+            />
+            <Stack.Screen
+              name="Heatmap"
+              component={HeatmapScreen}
+              options={{ headerShown: false }}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

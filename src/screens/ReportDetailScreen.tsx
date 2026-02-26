@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useIsFocused } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { RootStackParamList, ReportStatus } from '../types';
+import { RootStackParamList, Report, ReportStatus } from '../types';
 import {
   Colors,
   Fonts,
@@ -18,12 +20,14 @@ import {
   Shadows,
 } from '../constants/theme';
 import {
-  mockReports,
   statusDisplayMap,
   categoryDisplayMap,
 } from '../constants/mockData';
+import * as api from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReportDetail'>;
+
+const POLL_INTERVAL = 30000; // 30 seconds
 
 const STATUS_ORDER: ReportStatus[] = [
   ReportStatus.RECEIVED,
@@ -35,12 +39,51 @@ const STATUS_ORDER: ReportStatus[] = [
 
 export default function ReportDetailScreen({ route }: Props) {
   const { reportId } = route.params;
-  const report = mockReports.find((r) => r.id === reportId);
+  const isFocused = useIsFocused();
+  const [report, setReport] = useState<Report | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  if (!report) {
+  const fetchReport = useCallback(async () => {
+    try {
+      const data = await api.getReportById(reportId);
+      setReport(data);
+      setError('');
+    } catch {
+      if (!report) setError('Failed to load report');
+    }
+  }, [reportId]);
+
+  // Initial fetch
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await fetchReport();
+      setLoading(false);
+    })();
+  }, [fetchReport]);
+
+  // Polling while screen is focused
+  useEffect(() => {
+    if (!isFocused) return;
+    const interval = setInterval(() => {
+      fetchReport();
+    }, POLL_INTERVAL);
+    return () => clearInterval(interval);
+  }, [isFocused, fetchReport]);
+
+  if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Report not found</Text>
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={Colors.primaryOrange} />
+      </View>
+    );
+  }
+
+  if (error || !report) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>{error || 'Report not found'}</Text>
       </View>
     );
   }
@@ -265,6 +308,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.backgroundCream,
+  },
+  centerContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorText: {
     fontSize: Fonts.sizes.lg,

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 import { RootStackParamList, CommunityAlert, AlertSeverity } from '../types';
 import {
@@ -19,7 +21,7 @@ import {
   BorderRadius,
   Shadows,
 } from '../constants/theme';
-import { mockAlerts } from '../constants/mockData';
+import * as api from '../services/api';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -60,6 +62,41 @@ function getCategoryIcon(category: string): string {
 export default function AlertsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const [alerts, setAlerts] = useState<CommunityAlert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      setError('');
+      let lat: number | undefined;
+      let lng: number | undefined;
+
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const loc = await Location.getCurrentPositionAsync({});
+          lat = loc.coords.latitude;
+          lng = loc.coords.longitude;
+        }
+      } catch {
+        // Location unavailable — fetch without geo filter
+      }
+
+      const data = await api.getAlerts(lat, lng);
+      setAlerts(data);
+    } catch {
+      setError('Failed to load alerts');
+    }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await fetchAlerts();
+      setLoading(false);
+    })();
+  }, [fetchAlerts]);
 
   const renderAlert = ({ item }: { item: CommunityAlert }) => {
     const severityStyle = getSeverityStyle(item.severity);
@@ -157,31 +194,39 @@ export default function AlertsScreen() {
         <View style={styles.headerContent}>
           <Text style={styles.title}>Community Alerts</Text>
           <Text style={styles.subtitle}>
-            {mockAlerts.filter((a) => a.isActive).length} active alerts in your
+            {alerts.filter((a) => a.isActive).length} active alerts in your
             area
           </Text>
         </View>
       </View>
 
-      <FlatList
-        data={mockAlerts}
-        renderItem={renderAlert}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <MaterialCommunityIcons
-              name="bell-check-outline"
-              size={48}
-              color={Colors.textLight}
-            />
-            <Text style={styles.emptyText}>No alerts at this time</Text>
-            <Text style={styles.emptySubtext}>
-              You'll be notified of any alerts in your area
-            </Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primaryOrange} />
+        </View>
+      ) : (
+        <FlatList
+          data={alerts}
+          renderItem={renderAlert}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="bell-check-outline"
+                size={48}
+                color={Colors.textLight}
+              />
+              <Text style={styles.emptyText}>
+                {error || 'No alerts at this time'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                You'll be notified of any alerts in your area
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -332,5 +377,11 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.sm,
     color: Colors.textLight,
     marginTop: Spacing.xs,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.section,
   },
 });

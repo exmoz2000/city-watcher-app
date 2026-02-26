@@ -34,6 +34,39 @@ def login():
     return jsonify({"token": token, "user": user.to_dict()}), 200
 
 
+@auth_bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+
+    required_fields = ["email", "password", "first_name", "last_name"]
+    missing = [f for f in required_fields if not data.get(f)]
+    if missing:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
+
+    password = data["password"]
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+
+    email = data["email"].strip()
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Email already registered"}), 409
+
+    user = User(
+        email=email,
+        first_name=data["first_name"],
+        last_name=data["last_name"],
+        role="resident",
+        phone=data.get("phone"),
+        municipality_id=data.get("municipality_id"),
+    )
+    user.set_password(password)
+    db.session.add(user)
+    db.session.commit()
+
+    token = create_access_token(identity=str(user.id))
+    return jsonify({"token": token, "user": user.to_dict()}), 201
+
+
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():

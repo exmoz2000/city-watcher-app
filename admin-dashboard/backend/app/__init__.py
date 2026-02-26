@@ -33,6 +33,7 @@ def create_app():
     from app.routes.analytics import analytics_bp
     from app.routes.notifications import notifications_bp
     from app.routes.sla import sla_bp
+    from app.routes.mobile import mobile_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(reports_bp, url_prefix="/api/reports")
@@ -41,6 +42,7 @@ def create_app():
     app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
     app.register_blueprint(notifications_bp, url_prefix="/api/notifications")
     app.register_blueprint(sla_bp, url_prefix="/api/sla")
+    app.register_blueprint(mobile_bp, url_prefix="/api/mobile")
 
     from app.middleware.municipality_scope import load_current_user
     app.before_request(load_current_user)

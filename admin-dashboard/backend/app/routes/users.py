@@ -2,13 +2,16 @@ from flask import Blueprint, request, jsonify, g
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.user import User
-from app.middleware.municipality_scope import scope_query
+from app.middleware.municipality_scope import scope_query, role_required
 
 users_bp = Blueprint("users", __name__)
+
+ADMIN_ROLES = ["super_admin", "municipality_admin", "department_manager", "field_worker"]
 
 
 @users_bp.route("", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_users():
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
@@ -40,6 +43,7 @@ def get_users():
 
 @users_bp.route("/<int:user_id>", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_user(user_id):
     user = User.query.get_or_404(user_id)
     return jsonify(user.to_dict()), 200
@@ -47,6 +51,7 @@ def get_user(user_id):
 
 @users_bp.route("", methods=["POST"])
 @jwt_required()
+@role_required(["super_admin", "municipality_admin"])
 def create_user():
     data = request.get_json()
     email = data.get("email", "").strip()
@@ -72,6 +77,7 @@ def create_user():
 
 @users_bp.route("/<int:user_id>", methods=["PUT"])
 @jwt_required()
+@role_required(["super_admin", "municipality_admin"])
 def update_user(user_id):
     user = User.query.get_or_404(user_id)
     data = request.get_json()
@@ -90,6 +96,7 @@ def update_user(user_id):
 
 @users_bp.route("/<int:user_id>/status", methods=["PATCH"])
 @jwt_required()
+@role_required(["super_admin", "municipality_admin"])
 def toggle_user_status(user_id):
     user = User.query.get_or_404(user_id)
     data = request.get_json()

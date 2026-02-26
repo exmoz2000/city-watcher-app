@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,17 +21,40 @@ import {
   BorderRadius,
   Shadows,
 } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
+import { AuthError, ApiError, NetworkError } from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export default function LoginScreen({ navigation }: Props) {
+  const auth = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    // Mock login — navigate to main app
-    navigation.replace('MainTabs');
+  const handleLogin = async () => {
+    setErrorMessage('');
+    setLoading(true);
+    try {
+      await auth.login(email, password);
+      navigation.replace('MainTabs');
+    } catch (err) {
+      if (err instanceof NetworkError) {
+        setErrorMessage('No internet connection');
+      } else if (err instanceof AuthError) {
+        setErrorMessage('Invalid email or password');
+      } else if (err instanceof ApiError && err.status === 403) {
+        setErrorMessage('Account is deactivated');
+      } else if (err instanceof ApiError) {
+        setErrorMessage(err.serverMessage || 'Login failed');
+      } else {
+        setErrorMessage('Something went wrong');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,8 +127,23 @@ export default function LoginScreen({ navigation }: Props) {
             <Text style={styles.forgotPasswordText}>Forgot password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Sign In</Text>
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <MaterialCommunityIcons name="alert-circle" size={16} color={Colors.emergencyRed} />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          <TouchableOpacity
+            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={Colors.textWhite} />
+            ) : (
+              <Text style={styles.loginButtonText}>Sign In</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.divider}>
@@ -218,10 +257,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...Shadows.button,
   },
+  loginButtonDisabled: {
+    opacity: 0.7,
+  },
   loginButtonText: {
     fontSize: Fonts.sizes.lg,
     fontWeight: Fonts.weights.semiBold,
     color: Colors.textWhite,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.emergencyRed + '10',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  errorText: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.emergencyRed,
+    flex: 1,
   },
   divider: {
     flexDirection: 'row',

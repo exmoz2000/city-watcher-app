@@ -6,6 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,19 +21,70 @@ import {
   Shadows,
 } from '../constants/theme';
 import { categoryDisplayMap } from '../constants/mockData';
+import * as api from '../services/api';
+import { NetworkError } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { enqueueReport } from '../services/offlineQueue';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ReportForm'>;
 
 export default function ReportFormScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const categoryInfo = categoryDisplayMap[category];
+  const { user } = useAuth();
 
   const [description, setDescription] = useState('');
   const [hasPhoto, setHasPhoto] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    const caseId = `CW-2026-${String(Math.floor(Math.random() * 99999)).padStart(5, '0')}`;
-    navigation.navigate('ReportSubmitted', { caseId, category });
+  const handleSubmit = async () => {
+    setLoading(true);
+    const payload = {
+      category,
+      title: `${categoryInfo.label} Report`,
+      description,
+      priority: 'medium',
+      locationAddress: 'Current Location (GPS)',
+      locationLat: -33.9249,
+      locationLng: 18.4241,
+      citizenName: user ? `${user.profile.firstName} ${user.profile.lastName}` : undefined,
+      citizenPhone: user?.phoneNumber || undefined,
+      citizenEmail: user?.email || undefined,
+    };
+
+    try {
+      const report = await api.createReport(payload);
+
+      // Upload photo if attached
+      if (photoUri) {
+        try {
+          await api.uploadPhoto(report.id, photoUri);
+        } catch {
+          // Photo upload failed but report was created — continue
+        }
+      }
+
+      navigation.navigate('ReportSubmitted', { caseId: report.caseId, category });
+    } catch (err) {
+      if (err instanceof NetworkError) {
+        // Enqueue for offline submission
+        const id = `offline-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        await enqueueReport({
+          id,
+          payload,
+          photoUri,
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+        });
+        Alert.alert('Saved Offline', 'Your report has been saved and will be submitted when you are back online.');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', 'Failed to submit report. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const canSubmit = description.trim().length >= 10;
@@ -135,16 +188,22 @@ export default function ReportFormScreen({ route, navigation }: Props) {
 
       {/* Submit Button */}
       <TouchableOpacity
-        style={[styles.submitButton, !canSubmit && styles.submitButtonDisabled]}
+        style={[styles.submitButton, (!canSubmit || loading) && styles.submitButtonDisabled]}
         onPress={handleSubmit}
-        disabled={!canSubmit}
+        disabled={!canSubmit || loading}
       >
-        <MaterialCommunityIcons
-          name="send"
-          size={20}
-          color={Colors.textWhite}
-        />
-        <Text style={styles.submitButtonText}>Submit Report</Text>
+        {loading ? (
+          <ActivityIndicator color={Colors.textWhite} />
+        ) : (
+          <>
+            <MaterialCommunityIcons
+              name="send"
+              size={20}
+              color={Colors.textWhite}
+            />
+            <Text style={styles.submitButtonText}>Submit Report</Text>
+          </>
+        )}
       </TouchableOpacity>
 
       <View style={{ height: Spacing.xxxl }} />

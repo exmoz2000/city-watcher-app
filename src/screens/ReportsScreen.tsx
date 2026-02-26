@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,10 @@ import {
   FlatList,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -21,10 +22,12 @@ import {
   Shadows,
 } from '../constants/theme';
 import {
-  mockReports,
   statusDisplayMap,
   categoryDisplayMap,
 } from '../constants/mockData';
+import * as api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { getQueueCount } from '../services/offlineQueue';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -37,21 +40,62 @@ const filterOptions: { label: string; value: string }[] = [
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [offlineCount, setOfflineCount] = useState(0);
 
-  const filteredReports = mockReports.filter((r) => {
+  const fetchReports = useCallback(async () => {
+    try {
+      setError('');
+      const data = await api.getReports(user?.email);
+      const sorted = data.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      setReports(sorted);
+    } catch {
+      setError('Failed to load reports');
+    }
+  }, [user?.email]);
+
+  const fetchOfflineCount = useCallback(async () => {
+    const count = await getQueueCount();
+    setOfflineCount(count);
+  }, []);
+
+  // Fetch on mount
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await fetchReports();
+      await fetchOfflineCount();
+      setLoading(false);
+    })();
+  }, [fetchReports, fetchOfflineCount]);
+
+  // Re-fetch on screen focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchReports();
+      fetchOfflineCount();
+    }, [fetchReports, fetchOfflineCount]),
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchReports();
+    await fetchOfflineCount();
+    setRefreshing(false);
+  };
+
+  const filteredReports = reports.filter((r) => {
     if (activeFilter === 'active')
       return r.status !== ReportStatus.RESOLVED && r.status !== ReportStatus.CLOSED;
     if (activeFilter === 'resolved')
       return r.status === ReportStatus.RESOLVED || r.status === ReportStatus.CLOSED;
     return true;
   });
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  };
 
   const renderReport = ({ item }: { item: Report }) => {
     const statusInfo = statusDisplayMap[item.status];
@@ -124,16 +168,24 @@ export default function ReportsScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>My Reports</Text>
-        <TouchableOpacity
-          style={styles.newReportButton}
-          onPress={() => navigation.navigate('ReportCategory')}
-        >
-          <MaterialCommunityIcons
-            name="plus"
-            size={20}
-            color={Colors.textWhite}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          {offlineCount > 0 && (
+            <View style={styles.offlineBadge}>
+              <MaterialCommunityIcons name="cloud-off-outline" size={14} color={Colors.textWhite} />
+              <Text style={styles.offlineBadgeText}>{offlineCount}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={styles.newReportButton}
+            onPress={() => navigation.navigate('ReportCategory')}
+          >
+            <MaterialCommunityIcons
+              name="plus"
+              size={20}
+              color={Colors.textWhite}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Filters */}
@@ -159,25 +211,33 @@ export default function ReportsScreen() {
         ))}
       </View>
 
-      <FlatList
-        data={filteredReports}
-        renderItem={renderReport}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <MaterialCommunityIcons
-              name="clipboard-text-outline"
-              size={48}
-              color={Colors.textLight}
-            />
-            <Text style={styles.emptyText}>No reports found</Text>
-          </View>
-        }
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primaryOrange} />
+        </View>
+      ) : (
+        <FlatList
+          data={filteredReports}
+          renderItem={renderReport}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <MaterialCommunityIcons
+                name="clipboard-text-outline"
+                size={48}
+                color={Colors.textLight}
+              />
+              <Text style={styles.emptyText}>
+                {error || "No reports yet. Submit your first report!"}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -207,6 +267,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.button,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  offlineBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.emergencyRed,
+    borderRadius: BorderRadius.round,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    gap: 4,
+  },
+  offlineBadgeText: {
+    fontSize: Fonts.sizes.xs,
+    fontWeight: Fonts.weights.bold,
+    color: Colors.textWhite,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.section,
   },
   filters: {
     flexDirection: 'row',

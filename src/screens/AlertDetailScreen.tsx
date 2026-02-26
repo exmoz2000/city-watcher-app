@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { RootStackParamList, AlertSeverity } from '../types';
+import { RootStackParamList, AlertSeverity, CommunityAlert } from '../types';
 import {
   Colors,
   Fonts,
@@ -11,13 +11,37 @@ import {
   BorderRadius,
   Shadows,
 } from '../constants/theme';
-import { mockAlerts } from '../constants/mockData';
+import * as api from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AlertDetail'>;
 
 export default function AlertDetailScreen({ route }: Props) {
   const { alertId } = route.params;
-  const alert = mockAlerts.find((a) => a.id === alertId);
+  const [alert, setAlert] = useState<CommunityAlert | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        // Fetch all alerts and find the one matching alertId
+        const alerts = await api.getAlerts();
+        const found = alerts.find((a) => a.id === alertId);
+        setAlert(found ?? null);
+      } catch {
+        setAlert(null);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [alertId]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={Colors.primaryOrange} />
+      </View>
+    );
+  }
 
   if (!alert) {
     return (

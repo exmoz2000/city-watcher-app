@@ -2,11 +2,13 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
 from app.models.report import Report
 from app.models.user import User
-from app.middleware.municipality_scope import scope_query, DEPARTMENT_CATEGORIES
+from app.middleware.municipality_scope import scope_query, role_required, DEPARTMENT_CATEGORIES
 from sqlalchemy import func, extract, case
 from datetime import datetime, timedelta, timezone
 
 analytics_bp = Blueprint("analytics", __name__)
+
+ADMIN_ROLES = ["super_admin", "municipality_admin", "department_manager", "field_worker"]
 
 
 def _apply_date_filter(query, model=Report):
@@ -30,6 +32,7 @@ def _apply_date_filter(query, model=Report):
 
 @analytics_bp.route("/trends", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_trends():
     days = request.args.get("days", 30, type=int)
     now = datetime.now(timezone.utc)
@@ -56,6 +59,7 @@ def get_trends():
 
 @analytics_bp.route("/categories", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_categories():
     query = _apply_date_filter(scope_query(Report.query, Report))
     results = (
@@ -71,6 +75,7 @@ def get_categories():
 
 @analytics_bp.route("/performance", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_performance():
     query = _apply_date_filter(scope_query(Report.query, Report))
     total = query.count()
@@ -88,6 +93,7 @@ def get_performance():
 
 @analytics_bp.route("/department-performance", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def department_performance():
     """Resolution rates by department."""
     query = _apply_date_filter(scope_query(Report.query, Report))
@@ -112,6 +118,7 @@ def department_performance():
 
 @analytics_bp.route("/ward-breakdown", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def ward_breakdown():
     """Report counts per ward."""
     query = _apply_date_filter(scope_query(Report.query, Report))

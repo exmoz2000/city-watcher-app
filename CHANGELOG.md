@@ -2,6 +2,40 @@
 
 All notable changes to the CityWatcher project will be documented in this file.
 
+## [1.3.0] - 2026-02-26
+
+### Added - Mobile API Integration (Backend)
+
+- **Resident Registration**
+  - POST /api/auth/register endpoint for mobile user self-registration
+  - Validates required fields, password length (8+ chars), duplicate email
+  - Creates users with "resident" role, returns JWT token
+
+- **Mobile API Blueprint** (`/api/mobile/`)
+  - GET /api/mobile/alerts — community alerts with geographic filtering and severity sorting
+  - PATCH /api/mobile/profile — resident profile updates (blocks role/municipality changes)
+  - POST /api/mobile/device-tokens — Expo push notification token registration (idempotent)
+  - DELETE /api/mobile/device-tokens — token deactivation on logout
+  - POST /api/mobile/reports/<id>/attachments — photo upload (JPEG/PNG, max 10MB)
+
+- **New Database Models**
+  - DeviceToken — stores Expo push tokens per user with unique constraint
+  - CommunityAlert — geofenced alert broadcasts with severity, radius, expiration
+
+- **Resident Role Scoping**
+  - scope_query middleware updated: residents see only reports matching their email
+  - role_required decorator blocks residents from admin endpoints (dashboard, analytics, users, SLA)
+
+- **Seed Data**
+  - 6 community alerts (2 critical, 2 warning, 2 info — including 1 expired and 1 inactive)
+
+- **Test Suite Expansion**
+  - 140 total tests (up from 98)
+  - 6 new test files: registration, attachments, alerts, profile, device tokens, resident access
+  - Tests cover: validation, access control, geographic filtering, file upload constraints, role scoping
+
+---
+
 ## [1.2.0] - 2026-02-25
 
 ### Added - Dashboard V2 Upgrade
@@ -152,7 +186,7 @@ All notable changes to the CityWatcher project will be documented in this file.
 
 ## Project Information
 
-**Version**: 1.2.0
+**Version**: 1.3.0
 **Platform**: React Native (iOS, Android, Web) + Web Admin Dashboard
 **Framework**: Expo (mobile), Flask + React (admin)
 **Language**: TypeScript (mobile), Python + JavaScript (admin)

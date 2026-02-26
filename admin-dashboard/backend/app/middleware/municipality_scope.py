@@ -56,6 +56,10 @@ def scope_query(query, model):
     if user.role == "field_worker" and hasattr(model, "assigned_to"):
         query = query.filter(model.assigned_to == user.id)
 
+    # Residents see only their own reports (matched by citizen_email)
+    if user.role == "resident" and hasattr(model, "citizen_email"):
+        query = query.filter(model.citizen_email == user.email)
+
     return query
 
 

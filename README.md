@@ -30,7 +30,7 @@ A civic engagement platform for South African municipalities — combining a Rea
 | Admin Backend | Flask (Python), SQLAlchemy, JWT Auth |
 | Admin Frontend | React 19, Vite, Material-UI, Recharts, Leaflet, nivo |
 | Database | SQLite (dev) / PostgreSQL (prod) |
-| Testing | pytest (backend), 98 tests |
+| Testing | pytest (backend), 140 tests |
 
 ## Quick Start
 
@@ -100,7 +100,7 @@ CityWatcher/
 │   │   │   ├── routes/           # Auth, Reports, Users, Dashboard, Analytics, SLA, Notifications
 │   │   │   ├── middleware/       # Municipality scope + role-based access control
 │   │   │   └── services/         # SLA engine, CSV export
-│   │   ├── tests/                # 98 pytest tests (11 test files)
+│   │   ├── tests/                # 140 pytest tests (17 test files)
 │   │   ├── seed.py               # Demo data seeder
 │   │   └── run.py                # Entry point
 │   └── frontend/                 # React admin UI
@@ -114,6 +114,23 @@ CityWatcher/
 ├── CHANGELOG.md
 └── README.md
 ```
+
+## Mobile API Endpoints
+
+The backend exposes mobile-specific endpoints for the React Native app:
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/auth/register` | None | Resident self-registration |
+| POST | `/api/auth/login` | None | Login (returns JWT) |
+| GET | `/api/auth/me` | JWT | Get current user profile |
+| GET | `/api/reports` | JWT | List reports (residents see only their own) |
+| POST | `/api/reports` | JWT | Submit a new report |
+| GET | `/api/mobile/alerts` | JWT | Community alerts with geo-filtering |
+| PATCH | `/api/mobile/profile` | JWT | Update resident profile |
+| POST | `/api/mobile/device-tokens` | JWT | Register push notification token |
+| DELETE | `/api/mobile/device-tokens` | JWT | Deactivate push token |
+| POST | `/api/mobile/reports/<id>/attachments` | JWT | Upload photo (JPEG/PNG, max 10MB) |
 
 ## Documentation
 

@@ -10,6 +10,7 @@ from app.models.report import Report
 from app.models.report_sub import ReportHistory, ReportComment
 from app.models.notification import Notification
 from app.models.sla import SLAConfig, SLATracking
+from app.models.community_alert import CommunityAlert
 from datetime import datetime, timedelta, timezone
 import random
 
@@ -327,10 +328,96 @@ def seed():
                     sla_count += 1
         db.session.flush()
 
+        # Community Alerts
+        alerts = [
+            CommunityAlert(
+                title="Water Main Break - Observatory",
+                message="A major water main has burst on Main Road, Observatory. Residents may experience low water pressure or no water supply. Repair crews are on site.",
+                category="water_main_break",
+                severity="critical",
+                latitude=-33.9249,
+                longitude=18.4241,
+                radius_meters=1000,
+                expires_at=now + timedelta(days=2),
+                is_active=True,
+                municipality_id=m1.id,
+                created_at=now - timedelta(hours=3),
+            ),
+            CommunityAlert(
+                title="Power Outage - Sandton",
+                message="Scheduled maintenance will cause power outages in the Sandton area. Please ensure backup power for essential equipment.",
+                category="power_outage",
+                severity="critical",
+                latitude=-26.1070,
+                longitude=28.0570,
+                radius_meters=2000,
+                expires_at=now + timedelta(days=1),
+                is_active=True,
+                municipality_id=m3.id,
+                created_at=now - timedelta(hours=1),
+            ),
+            CommunityAlert(
+                title="Road Closure - Kloof Street",
+                message="Kloof Street will be partially closed for pothole repairs. Expect delays and use alternative routes where possible.",
+                category="road_closure",
+                severity="warning",
+                latitude=-33.9300,
+                longitude=18.4150,
+                radius_meters=500,
+                expires_at=now + timedelta(days=3),
+                is_active=True,
+                municipality_id=m1.id,
+                created_at=now - timedelta(hours=6),
+            ),
+            CommunityAlert(
+                title="Waste Collection Delay - Berea",
+                message="Waste collection in the Berea area has been delayed due to vehicle maintenance. Collections will resume tomorrow.",
+                category="waste_collection",
+                severity="warning",
+                latitude=-29.8450,
+                longitude=31.0050,
+                radius_meters=1500,
+                expires_at=now + timedelta(days=1),
+                is_active=True,
+                municipality_id=m2.id,
+                created_at=now - timedelta(hours=12),
+            ),
+            CommunityAlert(
+                title="Park Maintenance - Rondebosch Common",
+                message="Routine maintenance will be conducted at Rondebosch Common this week. Some areas may be temporarily inaccessible.",
+                category="maintenance",
+                severity="info",
+                latitude=-33.9600,
+                longitude=18.4730,
+                radius_meters=800,
+                expires_at=now - timedelta(days=1),  # Expired for testing
+                is_active=True,
+                municipality_id=m1.id,
+                created_at=now - timedelta(days=3),
+            ),
+        ]
+        # Make one alert inactive for testing
+        inactive_alert = CommunityAlert(
+            title="Resolved: Gas Leak - CBD",
+            message="The gas leak reported on Commissioner Street has been resolved. All clear.",
+            category="gas_leak",
+            severity="info",
+            latitude=-26.2050,
+            longitude=28.0470,
+            radius_meters=500,
+            expires_at=now + timedelta(days=1),
+            is_active=False,  # Inactive for testing
+            municipality_id=m3.id,
+            created_at=now - timedelta(days=2),
+        )
+        alerts.append(inactive_alert)
+        db.session.add_all(alerts)
+        db.session.flush()
+
         db.session.commit()
         print(f"Seeded: 3 municipalities, {len(all_users)} users, "
               f"{len(all_reports)} reports, {len(sla_configs)} SLA configs, "
-              f"{sla_count} SLA tracking records")
+              f"{sla_count} SLA tracking records, {len(alerts)} community alerts")
         print("Admin login: admin@citywatcher.co.za / admin123")
 
 

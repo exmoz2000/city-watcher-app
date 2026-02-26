@@ -47,6 +47,7 @@ def create_sla_config():
 
 @sla_bp.route("/config", methods=["GET"])
 @jwt_required()
+@role_required(["super_admin", "municipality_admin", "department_manager", "field_worker"])
 def list_sla_configs():
     query = scope_query(SLAConfig.query, SLAConfig)
     configs = query.all()
@@ -88,6 +89,7 @@ def delete_sla_config(config_id):
 
 @sla_bp.route("/dashboard", methods=["GET"])
 @jwt_required()
+@role_required(["super_admin", "municipality_admin", "department_manager", "field_worker"])
 def sla_dashboard():
     user = g.current_user
     municipality_id = None if user.role == "super_admin" else user.municipality_id

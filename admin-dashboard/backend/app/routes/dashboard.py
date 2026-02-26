@@ -2,15 +2,18 @@ from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 from app.models.report import Report
 from app.models.report_sub import ReportHistory
-from app.middleware.municipality_scope import scope_query
+from app.middleware.municipality_scope import scope_query, role_required
 from sqlalchemy import func
 from datetime import datetime, timedelta, timezone
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+ADMIN_ROLES = ["super_admin", "municipality_admin", "department_manager", "field_worker"]
+
 
 @dashboard_bp.route("/metrics", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_metrics():
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -59,6 +62,7 @@ def get_metrics():
 
 @dashboard_bp.route("/recent-activity", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_recent_activity():
     # Scope through Report join since ReportHistory has no municipality_id
     scoped_report_ids = scope_query(Report.query, Report).with_entities(Report.id)
@@ -74,6 +78,7 @@ def get_recent_activity():
 
 @dashboard_bp.route("/charts", methods=["GET"])
 @jwt_required()
+@role_required(ADMIN_ROLES)
 def get_charts():
     # Reports by category
     by_category = (

@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -20,20 +21,53 @@ import {
   BorderRadius,
   Shadows,
 } from '../constants/theme';
+import { useAuth } from '../contexts/AuthContext';
+import { ApiError, NetworkError } from '../services/api';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
 
 export default function SignUpScreen({ navigation }: Props) {
+  const auth = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSignUp = () => {
-    // Mock sign up — navigate to main app
-    navigation.replace('MainTabs');
+  const handleSignUp = async () => {
+    setErrorMessage('');
+    if (password !== confirmPassword) {
+      setErrorMessage('Passwords do not match');
+      return;
+    }
+    setLoading(true);
+    try {
+      await auth.register({
+        email,
+        password,
+        firstName,
+        lastName,
+        phone: phone || undefined,
+      });
+      navigation.replace('MainTabs');
+    } catch (err) {
+      if (err instanceof NetworkError) {
+        setErrorMessage('No internet connection');
+      } else if (err instanceof ApiError && err.status === 409) {
+        setErrorMessage('Email already registered');
+      } else if (err instanceof ApiError && err.status === 400) {
+        setErrorMessage(err.serverMessage || 'Please check your input');
+      } else if (err instanceof ApiError) {
+        setErrorMessage(err.serverMessage || 'Registration failed');
+      } else {
+        setErrorMessage('Something went wrong');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -143,9 +177,20 @@ export default function SignUpScreen({ navigation }: Props) {
             />
           </View>
 
-          <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-            <Text style={styles.signUpButtonText}>Create Account</Text>
+          <TouchableOpacity style={[styles.signUpButton, loading && styles.signUpButtonDisabled]} onPress={handleSignUp} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator color={Colors.textWhite} />
+            ) : (
+              <Text style={styles.signUpButtonText}>Create Account</Text>
+            )}
           </TouchableOpacity>
+
+          {errorMessage ? (
+            <View style={styles.errorContainer}>
+              <MaterialCommunityIcons name="alert-circle" size={16} color={Colors.emergencyRed} />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.footer}>
@@ -221,10 +266,27 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     ...Shadows.button,
   },
+  signUpButtonDisabled: {
+    opacity: 0.7,
+  },
   signUpButtonText: {
     fontSize: Fonts.sizes.lg,
     fontWeight: Fonts.weights.semiBold,
     color: Colors.textWhite,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.emergencyRed + '10',
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.sm,
+    marginTop: Spacing.md,
+    gap: Spacing.xs,
+  },
+  errorText: {
+    fontSize: Fonts.sizes.sm,
+    color: Colors.emergencyRed,
+    flex: 1,
   },
   footer: {
     flexDirection: 'row',
