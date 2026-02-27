@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Card, CardContent, Typography, Grid, Divider, Button,
   Select, MenuItem, FormControl, InputLabel, TextField, List, ListItem,
-  ListItemText, Chip, IconButton, CircularProgress,
+  ListItemText, Chip, IconButton, CircularProgress, Dialog, DialogContent,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
+import CloseIcon from '@mui/icons-material/Close';
+import ImageIcon from '@mui/icons-material/Image';
 import { StatusBadge, PriorityBadge, CATEGORY_LABELS } from '../components/StatusBadge';
 import api from '../services/api';
 
@@ -21,14 +23,37 @@ export default function ReportDetail() {
   const [comment, setComment] = useState('');
   const [users, setUsers] = useState([]);
   const [assignTo, setAssignTo] = useState('');
+  const [imageUrls, setImageUrls] = useState({});
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
 
   useEffect(() => {
     api.get(`/reports/${id}`).then((r) => {
       setReport(r.data);
       setNewStatus(r.data.status);
       setAssignTo(r.data.assigned_to || '');
+      
+      // Fetch images with auth
+      if (r.data.attachments && r.data.attachments.length > 0) {
+        r.data.attachments.forEach(async (att) => {
+          try {
+            const response = await api.get(`/reports/attachments/${att.file_path}`, {
+              responseType: 'blob'
+            });
+            const url = URL.createObjectURL(response.data);
+            setImageUrls(prev => ({ ...prev, [att.id]: url }));
+          } catch (err) {
+            console.error('Failed to load image:', err);
+          }
+        });
+      }
     });
     api.get('/users?per_page=100').then((r) => setUsers(r.data.users));
+    
+    // Cleanup blob URLs on unmount
+    return () => {
+      Object.values(imageUrls).forEach(url => URL.revokeObjectURL(url));
+    };
   }, [id]);
 
   const updateStatus = async () => {
@@ -49,6 +74,11 @@ export default function ReportDetail() {
     setComment('');
     const r = await api.get(`/reports/${id}`);
     setReport(r.data);
+  };
+
+  const openImageDialog = (url) => {
+    setSelectedImage(url);
+    setImageDialogOpen(true);
   };
 
   if (!report) return <Box sx={{ p: 4, textAlign: 'center' }}><CircularProgress /></Box>;
@@ -76,34 +106,74 @@ export default function ReportDetail() {
       <Grid container spacing={2}>
         {/* Info */}
         <Grid size={{ xs: 12, md: 6 }}>
-          {/* Attachments */}
+          {/* Attachments - Prominent Display */}
           {report.attachments && report.attachments.length > 0 && (
-            <Card sx={{ mb: 2 }}>
+            <Card sx={{ mb: 2, bgcolor: 'grey.900' }}>
               <CardContent>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-                  Photos ({report.attachments.length})
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <ImageIcon sx={{ color: '#F5A623' }} />
+                  <Typography variant="h6" fontWeight={600} color="white">
+                    Report Photos ({report.attachments.length})
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2 }}>
                   {report.attachments.map((att) => (
                     <Box
                       key={att.id}
-                      component="img"
-                      src={`${import.meta.env.VITE_API_URL.replace('/api', '')}/api/reports/attachments/${att.file_path}`}
-                      alt="Report attachment"
                       sx={{
-                        width: 120,
-                        height: 120,
-                        objectFit: 'cover',
-                        borderRadius: 1,
+                        position: 'relative',
+                        paddingTop: '100%',
+                        borderRadius: 2,
+                        overflow: 'hidden',
                         cursor: 'pointer',
+                        bgcolor: 'grey.800',
                         border: '2px solid',
-                        borderColor: 'divider',
-                        '&:hover': { opacity: 0.8 }
+                        borderColor: 'grey.700',
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          borderColor: '#F5A623',
+                          transform: 'scale(1.02)',
+                          boxShadow: '0 8px 16px rgba(245, 166, 35, 0.3)'
+                        }
                       }}
-                      onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}/api/reports/attachments/${att.file_path}`, '_blank')}
-                    />
+                      onClick={() => imageUrls[att.id] && openImageDialog(imageUrls[att.id])}
+                    >
+                      {imageUrls[att.id] ? (
+                        <Box
+                          component="img"
+                          src={imageUrls[att.id]}
+                          alt="Report attachment"
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <CircularProgress size={30} sx={{ color: '#F5A623' }} />
+                        </Box>
+                      )}
+                    </Box>
                   ))}
                 </Box>
+                <Typography variant="caption" color="grey.400" sx={{ mt: 2, display: 'block' }}>
+                  Click on any photo to view full size
+                </Typography>
               </CardContent>
             </Card>
           )}
@@ -210,6 +280,45 @@ export default function ReportDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Image Dialog */}
+      <Dialog
+        open={imageDialogOpen}
+        onClose={() => setImageDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0, position: 'relative', bgcolor: 'black' }}>
+          <IconButton
+            onClick={() => setImageDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: 'white',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+              zIndex: 1
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Full size attachment"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                maxHeight: '90vh',
+                objectFit: 'contain',
+                display: 'block'
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
