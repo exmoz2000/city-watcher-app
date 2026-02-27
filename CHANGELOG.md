@@ -2,6 +2,35 @@
 
 All notable changes to the CityWatcher project will be documented in this file.
 
+## [1.3.2] - 2026-02-27
+
+### Fixed - Admin Dashboard & Mobile App UX
+
+- **Admin Dashboard - Critical ngrok Fix**
+  - Fixed ngrok free tier interstitial warning page blocking API requests
+  - Added `ngrok-skip-browser-warning` header to all frontend API calls
+  - Updated Flask CORS configuration to allow the bypass header
+  - Dashboard now loads data successfully through ngrok tunnel
+  - Resolved white screen issue on navigation between pages
+  - All metrics, charts, and data now populate correctly
+
+- **Mobile App - Report Form UX**
+  - Added helpful hint message above submit button when disabled
+  - Shows exact reason why button is greyed out:
+    - "Add X more characters to description" (requires 10+ characters)
+    - "Waiting for location..." (while GPS is loading)
+    - "Location required to submit" (if location unavailable)
+  - Improved user feedback for form validation requirements
+  - Blue info box with icon displays above submit button
+
+### Technical Details
+- Frontend: Added `ngrok-skip-browser-warning: true` header to axios config
+- Backend: Updated CORS to accept the bypass header in allowed headers
+- Backend: Added after_request middleware to ensure header is in Access-Control-Allow-Headers
+- Mobile: Added conditional hint box component with dynamic messaging based on validation state
+
+---
+
 ## [1.3.1] - 2026-02-27
 
 ### Fixed - Mobile App Dependencies & Stability
@@ -12,10 +41,40 @@ All notable changes to the CityWatcher project will be documented in this file.
   - Added axios for HTTP API requests
   - Added expo-secure-store for secure token storage
   - Added expo-notifications for push notifications
+  - Added expo-image-picker for camera functionality
   - Fixed syntax error in mappers.ts BackendReport interface (missing closing brace)
   - Fixed AuthContext initialization hanging on Expo Go
   - Removed blocking push notification calls that prevented app startup in Expo Go
   - Fixed Flask backend to listen on all network interfaces (0.0.0.0) for mobile device connectivity
+
+- **Heatmap Visualization**
+  - Replaced circle-based heatmap with proper weighted Heatmap component
+  - Uses react-native-maps Heatmap with gradient colors (yellow → orange → red)
+  - Smooth gradient visualization based on incident density
+  - Works on both iOS and Android
+
+- **Camera & Photo Upload**
+  - Implemented real camera functionality using expo-image-picker
+  - Disabled built-in crop UI for better UX
+  - Custom photo preview with Remove/Retake buttons
+  - Photos properly uploaded to backend with reports
+
+- **GPS & Location Services**
+  - Implemented real GPS tracking with expo-location
+  - Shows actual user location with reverse geocoding for addresses
+  - GPS button in City Insights now centers on user location
+  - Location permissions handled gracefully
+  - Fallback to default location if permission denied
+
+- **UI & Safe Area Fixes**
+  - Added safe area insets to all scrollable screens
+  - Fixed UI getting stuck below navigation buttons
+  - Applied to: ReportFormScreen, ReportDetailScreen, HeatmapScreen, AlertDetailScreen, ReportCategoryScreen
+  - Proper bottom padding on all screens
+
+- **Admin Dashboard**
+  - Added 10-second auto-refresh to Users page
+  - New users appear automatically without manual refresh
 
 - **Expo Go Compatibility**
   - Disabled automatic update checks to prevent startup delays
@@ -24,7 +83,7 @@ All notable changes to the CityWatcher project will be documented in this file.
   - App now loads successfully in Expo Go development environment
 
 - **Network Configuration**
-  - Updated API base URL to use local IP address (192.168.101.108) for physical device testing
+  - Updated API base URL to use local IP address for physical device testing
   - Backend now accepts connections from local network devices
   - Added clear instructions for switching between localhost (emulator) and IP address (physical device)
 
@@ -38,13 +97,18 @@ All notable changes to the CityWatcher project will be documented in this file.
 - ✅ App successfully loads in Expo Go on Android
 - ✅ Login/signup functionality working with backend API
 - ✅ Network connectivity between mobile device and backend server
+- ✅ Real camera capture and photo upload working
+- ✅ GPS tracking showing actual user location
+- ✅ Heatmap displaying proper gradient visualization
+- ✅ All screens have proper safe area padding
 - ✅ All critical dependencies installed and functioning
 
 ### Notes
 - Push notifications will work in standalone builds but are disabled in Expo Go
 - Backend API server must be running on host='0.0.0.0' for mobile device access
 - Update API base URL in src/services/api.ts when switching between emulator and physical device
-- All 6 missing dependencies now properly documented in package.json
+- Heatmap uses weighted gradient for better visualization
+- GPS button centers on user location when available
 
 ---
 
@@ -232,7 +296,7 @@ All notable changes to the CityWatcher project will be documented in this file.
 
 ## Project Information
 
-**Version**: 1.3.0
+**Version**: 1.3.2
 **Platform**: React Native (iOS, Android, Web) + Web Admin Dashboard
 **Framework**: Expo (mobile), Flask + React (admin)
 **Language**: TypeScript (mobile), Python + JavaScript (admin)

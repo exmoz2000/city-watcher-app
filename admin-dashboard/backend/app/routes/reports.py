@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, Response, g
+from flask import Blueprint, request, jsonify, Response, g, send_from_directory, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import db
 from app.models.report import Report
@@ -9,6 +9,7 @@ from app.middleware.municipality_scope import scope_query, role_required
 from app.services.sla_engine import calculate_sla_deadline
 from app.services.export_service import generate_csv
 from datetime import datetime, timezone
+import os
 
 reports_bp = Blueprint("reports", __name__)
 
@@ -328,3 +329,11 @@ def get_stats():
         "resolved": resolved,
         "pending": received + under_review,
     }), 200
+
+
+@reports_bp.route("/attachments/<path:filepath>", methods=["GET"])
+@jwt_required()
+def serve_attachment(filepath):
+    """Serve uploaded report attachments"""
+    upload_base = current_app.config.get("UPLOAD_FOLDER", "uploads")
+    return send_from_directory(upload_base, filepath)

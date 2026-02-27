@@ -22,9 +22,15 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 86400  # 24 hours
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization", "ngrok-skip-browser-warning"]}})
     db.init_app(app)
     jwt.init_app(app)
+    
+    # Add ngrok bypass middleware
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,ngrok-skip-browser-warning')
+        return response
 
     from app.routes.auth import auth_bp
     from app.routes.reports import reports_bp

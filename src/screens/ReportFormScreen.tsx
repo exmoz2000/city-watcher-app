@@ -293,6 +293,18 @@ export default function ReportFormScreen({ route, navigation }: Props) {
       </View>
 
       {/* Submit Button */}
+      {!canSubmit && !loading && (
+        <View style={styles.hintBox}>
+          <MaterialCommunityIcons name="information" size={16} color={Colors.infoBlue} />
+          <Text style={styles.hintText}>
+            {description.trim().length < 10
+              ? `Add ${10 - description.trim().length} more characters to description`
+              : locationLoading
+              ? 'Waiting for location...'
+              : 'Location required to submit'}
+          </Text>
+        </View>
+      )}
       <TouchableOpacity
         style={[styles.submitButton, (!canSubmit || loading) && styles.submitButtonDisabled]}
         onPress={handleSubmit}
@@ -489,5 +501,19 @@ const styles = StyleSheet.create({
     fontSize: Fonts.sizes.lg,
     fontWeight: Fonts.weights.semiBold,
     color: Colors.textWhite,
+  },
+  hintBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.infoBlue + '15',
+    borderRadius: BorderRadius.card,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.xs,
+  },
+  hintText: {
+    flex: 1,
+    fontSize: Fonts.sizes.sm,
+    color: Colors.infoBlue,
   },
 });

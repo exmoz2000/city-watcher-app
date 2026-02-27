@@ -62,6 +62,7 @@ class Report(db.Model):
             "assigned_to": self.assigned_to,
             "assignee_name": f"{self.assignee.first_name} {self.assignee.last_name}" if self.assignee else None,
             "municipality_id": self.municipality_id,
+            "attachment_count": len(self.attachments),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,

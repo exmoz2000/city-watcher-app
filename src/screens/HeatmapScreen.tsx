@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import MapView, { Heatmap } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location';
 
 import { Colors, Fonts, Spacing, BorderRadius, Shadows } from '../constants/theme';
 import {
@@ -46,6 +47,27 @@ export default function HeatmapScreen() {
   const mapRef = useRef<MapView>(null);
   const [activeFilter, setActiveFilter] = useState<IssueFilter>('all');
   const [selectedHotspot, setSelectedHotspot] = useState<HotspotArea | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
+  // Get user location on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
+          setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        }
+      } catch (error) {
+        console.log('Location error:', error);
+      }
+    })();
+  }, []);
 
   const handleHotspotPress = (hotspot: HotspotArea) => {
     setSelectedHotspot(hotspot);
@@ -61,7 +83,20 @@ export default function HeatmapScreen() {
 
   const handleResetView = () => {
     setSelectedHotspot(null);
-    mapRef.current?.animateToRegion(CAPE_TOWN_REGION, 500);
+    if (userLocation) {
+      // Center on user location if available
+      mapRef.current?.animateToRegion(
+        {
+          ...userLocation,
+          latitudeDelta: 0.08,
+          longitudeDelta: 0.08,
+        },
+        500
+      );
+    } else {
+      // Fall back to Cape Town region
+      mapRef.current?.animateToRegion(CAPE_TOWN_REGION, 500);
+    }
   };
 
   // Convert heatmap points to the format expected by Heatmap component

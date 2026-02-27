@@ -46,6 +46,7 @@ npm install
    - Open `src/services/api.ts`
    - For physical device: Use your computer's local IP (e.g., `http://192.168.101.108:5000/api`)
    - For emulator: Use `http://localhost:5000/api`
+   - To find your IP: Run `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
 
 3. Start the Expo development server:
 ```bash
@@ -57,9 +58,20 @@ npx expo start -c
 4. Run on your device:
    - Install Expo Go app on your Android/iOS device
    - Scan the QR code from the terminal
+   - Grant camera and location permissions when prompted
    - Note: Push notifications are disabled in Expo Go (will work in standalone builds)
 
-5. Important: Make sure both your phone and computer are on the same WiFi network
+5. Important: 
+   - Ensure both your phone and computer are on the same WiFi network
+   - Backend server must be running with `host='0.0.0.0'` (see Admin Dashboard setup)
+
+### Features Working in Current Build
+- ✅ Real GPS tracking with user location
+- ✅ Camera capture with photo upload
+- ✅ Weighted heatmap visualization
+- ✅ Offline report queue
+- ✅ Safe area insets on all screens
+- ✅ Auto-refresh admin dashboard
 
 ### Admin Dashboard
 

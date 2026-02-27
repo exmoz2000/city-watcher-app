@@ -66,3 +66,6 @@ admin-dashboard/frontend/dist/
 docs/business-model.md
 docs/recommendations.md
 .kiro/
+
+# Local Netlify folder
+.netlify

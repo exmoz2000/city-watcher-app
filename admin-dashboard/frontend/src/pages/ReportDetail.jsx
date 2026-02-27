@@ -76,6 +76,38 @@ export default function ReportDetail() {
       <Grid container spacing={2}>
         {/* Info */}
         <Grid size={{ xs: 12, md: 6 }}>
+          {/* Attachments */}
+          {report.attachments && report.attachments.length > 0 && (
+            <Card sx={{ mb: 2 }}>
+              <CardContent>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                  Photos ({report.attachments.length})
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {report.attachments.map((att) => (
+                    <Box
+                      key={att.id}
+                      component="img"
+                      src={`${import.meta.env.VITE_API_URL.replace('/api', '')}/api/reports/attachments/${att.file_path}`}
+                      alt="Report attachment"
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        objectFit: 'cover',
+                        borderRadius: 1,
+                        cursor: 'pointer',
+                        border: '2px solid',
+                        borderColor: 'divider',
+                        '&:hover': { opacity: 0.8 }
+                      }}
+                      onClick={() => window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}/api/reports/attachments/${att.file_path}`, '_blank')}
+                    />
+                  ))}
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+
           <Card sx={{ mb: 2 }}>
             <CardContent>
               <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>

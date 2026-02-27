@@ -188,6 +188,7 @@ export default function Reports() {
                   />
                 </TableCell>
                 <TableCell>Report #</TableCell>
+                <TableCell>Photo</TableCell>
                 <TableCell>Category</TableCell>
                 <TableCell>Location</TableCell>
                 <TableCell>Status</TableCell>
@@ -206,6 +207,28 @@ export default function Reports() {
                     <Checkbox checked={selected.includes(r.id)} onChange={() => handleSelect(r.id)} />
                   </TableCell>
                   <TableCell><Typography variant="body2" fontWeight={600}>{r.report_number}</Typography></TableCell>
+                  <TableCell>
+                    {r.attachment_count > 0 ? (
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: 'primary.light',
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: 'primary.main'
+                        }}
+                      >
+                        {r.attachment_count}
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">—</Typography>
+                    )}
+                  </TableCell>
                   <TableCell>{CATEGORY_LABELS[r.category] || r.category}</TableCell>
                   <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.location_address}
