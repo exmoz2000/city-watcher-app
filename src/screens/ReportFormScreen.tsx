@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList } from '../types';
 import {
@@ -34,10 +36,60 @@ export default function ReportFormScreen({ route, navigation }: Props) {
   const { category } = route.params;
   const categoryInfo = categoryDisplayMap[category];
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [description, setDescription] = useState('');
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(true);
+
+  // Get current location on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocation({
+            lat: -33.9249,
+            lng: 18.4241,
+            address: 'Location permission denied',
+          });
+          setLocationLoading(false);
+          return;
+        }
+
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        // Reverse geocode to get address
+        const [address] = await Location.reverseGeocodeAsync({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        });
+
+        const addressString = address
+          ? `${address.street || ''} ${address.name || ''}, ${address.city || 'Cape Town'}`.trim()
+          : 'Current Location';
+
+        setLocation({
+          lat: currentLocation.coords.latitude,
+          lng: currentLocation.coords.longitude,
+          address: addressString,
+        });
+      } catch (error) {
+        console.error('Location error:', error);
+        setLocation({
+          lat: -33.9249,
+          lng: 18.4241,
+          address: 'Unable to get location',
+        });
+      } finally {
+        setLocationLoading(false);
+      }
+    })();
+  }, []);
 
   const handleTakePhoto = async () => {
     // Request camera permissions
@@ -50,8 +102,7 @@ export default function ReportFormScreen({ route, navigation }: Props) {
     // Launch camera
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [4, 3],
+      allowsEditing: false, // Disable built-in editing
       quality: 0.8,
     });
 
@@ -61,15 +112,20 @@ export default function ReportFormScreen({ route, navigation }: Props) {
   };
 
   const handleSubmit = async () => {
+    if (!location) {
+      Alert.alert('Error', 'Waiting for location...');
+      return;
+    }
+
     setLoading(true);
     const payload = {
       category,
       title: `${categoryInfo.label} Report`,
       description,
       priority: 'medium',
-      locationAddress: 'Current Location (GPS)',
-      locationLat: -33.9249,
-      locationLng: 18.4241,
+      locationAddress: location.address,
+      locationLat: location.lat,
+      locationLng: location.lng,
       citizenName: user ? `${user.profile.firstName} ${user.profile.lastName}` : undefined,
       citizenPhone: user?.phoneNumber || undefined,
       citizenEmail: user?.email || undefined,
@@ -109,12 +165,12 @@ export default function ReportFormScreen({ route, navigation }: Props) {
     }
   };
 
-  const canSubmit = description.trim().length >= 10;
+  const canSubmit = description.trim().length >= 10 && !locationLoading && location !== null;
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxxl }]}
       keyboardShouldPersistTaps="handled"
     >
       {/* Category Badge */}
@@ -129,23 +185,28 @@ export default function ReportFormScreen({ route, navigation }: Props) {
 
       {/* Photo Section */}
       <Text style={styles.sectionLabel}>Photo</Text>
-      <TouchableOpacity
-        style={styles.photoButton}
-        onPress={handleTakePhoto}
-      >
-        {photoUri ? (
-          <View style={styles.photoContainer}>
-            <Image source={{ uri: photoUri }} style={styles.photoPreview} />
-            <View style={styles.photoOverlay}>
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={32}
-                color={Colors.successGreen}
-              />
-              <Text style={styles.photoSuccessText}>Photo captured</Text>
-            </View>
+      {photoUri ? (
+        <View style={styles.photoContainer}>
+          <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={styles.photoActionButton}
+              onPress={() => setPhotoUri(undefined)}
+            >
+              <MaterialCommunityIcons name="delete" size={20} color={Colors.emergencyRed} />
+              <Text style={styles.photoActionText}>Remove</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.photoActionButton, styles.photoActionButtonPrimary]}
+              onPress={handleTakePhoto}
+            >
+              <MaterialCommunityIcons name="camera-retake" size={20} color={Colors.textWhite} />
+              <Text style={[styles.photoActionText, styles.photoActionTextWhite]}>Retake</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
+        </View>
+      ) : (
+        <TouchableOpacity style={styles.photoButton} onPress={handleTakePhoto}>
           <View style={styles.photoPlaceholder}>
             <MaterialCommunityIcons
               name="camera-plus"
@@ -155,8 +216,8 @@ export default function ReportFormScreen({ route, navigation }: Props) {
             <Text style={styles.photoText}>Take a photo of the issue</Text>
             <Text style={styles.photoHint}>GPS coordinates will be auto-tagged</Text>
           </View>
-        )}
-      </TouchableOpacity>
+        </TouchableOpacity>
+      )}
 
       {/* Description */}
       <Text style={styles.sectionLabel}>Description</Text>
@@ -178,24 +239,44 @@ export default function ReportFormScreen({ route, navigation }: Props) {
       {/* Location */}
       <Text style={styles.sectionLabel}>Location</Text>
       <View style={styles.locationCard}>
-        <MaterialCommunityIcons
-          name="map-marker"
-          size={24}
-          color={Colors.emergencyRed}
-        />
-        <View style={styles.locationInfo}>
-          <Text style={styles.locationAddress}>
-            Current Location (GPS)
-          </Text>
-          <Text style={styles.locationCoords}>
-            -33.9249, 18.4241 · Accuracy: 10m
-          </Text>
-        </View>
-        <MaterialCommunityIcons
-          name="check-circle"
-          size={20}
-          color={Colors.successGreen}
-        />
+        {locationLoading ? (
+          <>
+            <ActivityIndicator size="small" color={Colors.primaryOrange} />
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationAddress}>Getting your location...</Text>
+            </View>
+          </>
+        ) : location ? (
+          <>
+            <MaterialCommunityIcons
+              name="map-marker"
+              size={24}
+              color={Colors.emergencyRed}
+            />
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationAddress}>{location.address}</Text>
+              <Text style={styles.locationCoords}>
+                {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+              </Text>
+            </View>
+            <MaterialCommunityIcons
+              name="check-circle"
+              size={20}
+              color={Colors.successGreen}
+            />
+          </>
+        ) : (
+          <>
+            <MaterialCommunityIcons
+              name="map-marker-off"
+              size={24}
+              color={Colors.textSecondary}
+            />
+            <View style={styles.locationInfo}>
+              <Text style={styles.locationAddress}>Location unavailable</Text>
+            </View>
+          </>
+        )}
       </View>
 
       {/* Department */}
@@ -280,30 +361,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoContainer: {
-    width: '100%',
-    position: 'relative',
+    backgroundColor: Colors.cardWhite,
+    borderRadius: BorderRadius.card,
+    overflow: 'hidden',
+    marginBottom: Spacing.xl,
+    ...Shadows.card,
   },
   photoPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: BorderRadius.card,
+    height: 240,
+    resizeMode: 'cover',
   },
-  photoOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: BorderRadius.card,
+  photoActions: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+    gap: Spacing.sm,
+  },
+  photoActionButton: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.button,
+    backgroundColor: Colors.backgroundCream,
+    gap: Spacing.xs,
   },
-  photoSuccessText: {
-    fontSize: Fonts.sizes.md,
+  photoActionButtonPrimary: {
+    backgroundColor: Colors.primaryOrange,
+  },
+  photoActionText: {
+    fontSize: Fonts.sizes.sm,
     fontWeight: Fonts.weights.semiBold,
+    color: Colors.textPrimary,
+  },
+  photoActionTextWhite: {
     color: Colors.textWhite,
-    marginTop: Spacing.sm,
   },
   photoText: {
     fontSize: Fonts.sizes.md,

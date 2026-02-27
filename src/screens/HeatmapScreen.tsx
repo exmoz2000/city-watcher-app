@@ -64,18 +64,13 @@ export default function HeatmapScreen() {
     mapRef.current?.animateToRegion(CAPE_TOWN_REGION, 500);
   };
 
-  // Get color based on weight
-  const getColorForWeight = (weight: number): string => {
-    if (weight >= 8) return '#C62828'; // High - dark red
-    if (weight >= 6) return '#EF5350'; // Medium-high - red
-    if (weight >= 4) return '#FF8A65'; // Medium - orange
-    if (weight >= 2) return '#FFB74D'; // Low-medium - light orange
-    return '#FFE082'; // Low - yellow
-  };
-
-  // Get radius based on weight
-  const getRadiusForWeight = (weight: number): number => {
-    return weight * 50; // Scale radius by weight
+  // Get color and opacity based on weight for better heatmap effect
+  const getHeatmapStyle = (weight: number): { color: string; radius: number; opacity: number } => {
+    if (weight >= 8) return { color: '#D32F2F', radius: 200, opacity: 0.3 };
+    if (weight >= 6) return { color: '#F44336', radius: 150, opacity: 0.25 };
+    if (weight >= 4) return { color: '#FF5722', radius: 120, opacity: 0.2 };
+    if (weight >= 2) return { color: '#FF9800', radius: 100, opacity: 0.15 };
+    return { color: '#FFC107', radius: 80, opacity: 0.1 };
   };
 
   return (
@@ -143,19 +138,21 @@ export default function HeatmapScreen() {
           showsScale
           mapType="standard"
         >
-          {heatmapPoints.map((point, index) => (
-            <Circle
-              key={`heatpoint-${index}`}
-              center={{
-                latitude: point.latitude,
-                longitude: point.longitude,
-              }}
-              radius={getRadiusForWeight(point.weight)}
-              fillColor={getColorForWeight(point.weight) + '40'} // 40 = 25% opacity
-              strokeColor={getColorForWeight(point.weight)}
-              strokeWidth={1}
-            />
-          ))}
+          {heatmapPoints.map((point, index) => {
+            const style = getHeatmapStyle(point.weight);
+            return (
+              <Circle
+                key={`heatpoint-${index}`}
+                center={{
+                  latitude: point.latitude,
+                  longitude: point.longitude,
+                }}
+                radius={style.radius}
+                fillColor={style.color + Math.round(style.opacity * 255).toString(16).padStart(2, '0')}
+                strokeWidth={0}
+              />
+            );
+          })}
         </MapView>
 
         {/* Legend overlay */}
@@ -201,7 +198,7 @@ export default function HeatmapScreen() {
       <ScrollView
         style={styles.hotspotList}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.hotspotListContent}
+        contentContainerStyle={[styles.hotspotListContent, { paddingBottom: insets.bottom + Spacing.xxl }]}
       >
         <Text style={styles.sectionTitle}>Top Hotspots</Text>
         {hotspotAreas.map((hotspot, index) => (

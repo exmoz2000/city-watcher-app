@@ -10,6 +10,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useIsFocused } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList, Report, ReportStatus } from '../types';
 import {
@@ -40,6 +41,7 @@ const STATUS_ORDER: ReportStatus[] = [
 export default function ReportDetailScreen({ route }: Props) {
   const { reportId } = route.params;
   const isFocused = useIsFocused();
+  const insets = useSafeAreaInsets();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -93,7 +95,7 @@ export default function ReportDetailScreen({ route }: Props) {
   const currentStatusIndex = STATUS_ORDER.indexOf(report.status);
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}>
       {/* Case Header */}
       <View style={styles.caseHeader}>
         <Text style={styles.caseId}>{report.caseId}</Text>
