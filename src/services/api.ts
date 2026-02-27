@@ -16,9 +16,11 @@ import {
 } from './mappers';
 
 // --- Configuration ---
-// Use your computer's local IP address when testing on a physical device
-// Change this to 'http://localhost:5000/api' when using an emulator
-const BASE_URL = 'http://192.168.101.108:5000/api';
+// PRODUCTION: Use ngrok tunnel URL for remote testing
+// DEVELOPMENT: Use local IP when testing on same network
+const BASE_URL = 'https://studiously-sphereless-concetta.ngrok-free.dev/api';
+// const BASE_URL = 'http://192.168.101.108:5000/api'; // Local network testing
+// const BASE_URL = 'http://localhost:5000/api'; // Emulator testing
 const TOKEN_KEY = 'auth_token';
 
 // --- Error Classes ---
