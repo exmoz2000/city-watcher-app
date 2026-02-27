@@ -16,7 +16,9 @@ import {
 } from './mappers';
 
 // --- Configuration ---
-const BASE_URL = 'http://localhost:5000/api';
+// Use your computer's local IP address when testing on a physical device
+// Change this to 'http://localhost:5000/api' when using an emulator
+const BASE_URL = 'http://192.168.101.108:5000/api';
 const TOKEN_KEY = 'auth_token';
 
 // --- Error Classes ---

@@ -35,10 +35,31 @@ A civic engagement platform for South African municipalities — combining a Rea
 ## Quick Start
 
 ### Mobile App
+
+1. Install dependencies:
 ```bash
+cd city-watcher-app
 npm install
-npm start
 ```
+
+2. Configure API connection:
+   - Open `src/services/api.ts`
+   - For physical device: Use your computer's local IP (e.g., `http://192.168.101.108:5000/api`)
+   - For emulator: Use `http://localhost:5000/api`
+
+3. Start the Expo development server:
+```bash
+npm start
+# or for a clean start (recommended after dependency changes):
+npx expo start -c
+```
+
+4. Run on your device:
+   - Install Expo Go app on your Android/iOS device
+   - Scan the QR code from the terminal
+   - Note: Push notifications are disabled in Expo Go (will work in standalone builds)
+
+5. Important: Make sure both your phone and computer are on the same WiFi network
 
 ### Admin Dashboard
 
@@ -46,10 +67,10 @@ npm start
 ```bash
 cd admin-dashboard/backend
 python -m venv venv
-venv\Scripts\activate        # Windows
+venv\Scripts\activate        # Windows (or source venv/bin/activate on Mac/Linux)
 pip install -r requirements.txt
 python seed.py               # Seed demo data (150 reports, 3 municipalities, SLA configs)
-python run.py                # Start on port 5000
+python run.py                # Start on port 5000 (listens on 0.0.0.0 for mobile access)
 ```
 
 2. Set up the frontend:

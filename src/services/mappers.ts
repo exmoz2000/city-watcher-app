@@ -56,7 +56,6 @@ export interface BackendReport {
   citizen_name: string;
   citizen_phone: string;
   citizen_email: string;
-}
   assigned_to: number | null;
   assignee_name: string | null;
   created_at: string;

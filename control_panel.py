@@ -19,8 +19,9 @@ class CityWatcherControlPanel:
         self.backend_dir = os.path.join(self.base_dir, 'admin-dashboard', 'backend')
         self.frontend_dir = os.path.join(self.base_dir, 'admin-dashboard', 'frontend')
         self.venv_python = os.path.join(self.backend_dir, 'venv', 'Scripts', 'python.exe')
-        self.node_exe = r'C:\Program Files\node-v24.13.1-win-x64\node.exe'
-        self.npm_cli = r'C:\Program Files\node-v24.13.1-win-x64\node_modules\npm\bin\npm-cli.js'
+        # Use system node/npm from PATH
+        self.node_exe = 'node'
+        self.npm_cmd = 'npm'
 
         # Process tracking - Mobile App
         self.mobile_process = None
@@ -201,6 +202,7 @@ class CityWatcherControlPanel:
         btns2.pack(fill='x', pady=5)
         self._action_btn(btns2, "📱 Android", self.green, self.start_android).pack(side='left', padx=(0, 8))
         self._action_btn(btns2, "🌍 Web", self.blue, self.start_web).pack(side='left', padx=(0, 8))
+        self._action_btn(btns2, "📲 Open DevTools (QR Code)", self.purple, self.open_expo_devtools).pack(side='left', padx=(0, 8))
 
     # ── Admin Dashboard Tab ───────────────────────────────────
 
@@ -416,7 +418,7 @@ class CityWatcherControlPanel:
             self.log("Mobile server already running!")
             return
         self.is_tunnel = False
-        cmd = f'"{self.node_exe}" "{self.npm_cli}" start'
+        cmd = 'npm start'
         self.mobile_process = self._start_process(cmd, self.base_dir, "Mobile App")
         if self.mobile_process:
             self.mobile_pid = self.mobile_process.pid
@@ -426,8 +428,7 @@ class CityWatcherControlPanel:
             self.log("Mobile server already running!")
             return
         self.is_tunnel = True
-        npx_cli = os.path.join(os.path.dirname(self.npm_cli), 'npx-cli.js')
-        cmd = f'"{self.node_exe}" "{npx_cli}" expo start --tunnel'
+        cmd = 'npx expo start --tunnel'
         self.mobile_process = self._start_process(cmd, self.base_dir, "Mobile Tunnel")
         if self.mobile_process:
             self.mobile_pid = self.mobile_process.pid
@@ -442,7 +443,7 @@ class CityWatcherControlPanel:
             self.log("Start the mobile server first!")
             return
         self.log("Opening Android emulator...")
-        cmd = f'"{self.node_exe}" "{self.npm_cli}" run android'
+        cmd = 'npm run android'
         subprocess.Popen(cmd, shell=True, cwd=self.base_dir)
 
     def start_web(self):
@@ -450,8 +451,17 @@ class CityWatcherControlPanel:
             self.log("Start the mobile server first!")
             return
         self.log("Opening web browser...")
-        cmd = f'"{self.node_exe}" "{self.npm_cli}" run web'
+        cmd = 'npm run web'
         subprocess.Popen(cmd, shell=True, cwd=self.base_dir)
+
+    def open_expo_devtools(self):
+        if not self.mobile_process or self.mobile_process.poll() is not None:
+            self.log("Start the mobile server first!")
+            return
+        self.log("Opening Expo DevTools with QR code...")
+        # Expo DevTools typically runs on port 8081
+        webbrowser.open('http://localhost:8081')
+        self.log("If DevTools doesn't open, check the logs for the Expo URL")
 
     # ── Admin Backend Commands ────────────────────────────────
 
@@ -459,7 +469,13 @@ class CityWatcherControlPanel:
         if self.backend_process and self.backend_process.poll() is None:
             self.log("Backend already running!")
             return
-        cmd = f'"{self.venv_python}" run.py'
+        # Use venv python if exists, otherwise system python
+        if os.path.exists(self.venv_python):
+            python_cmd = f'"{self.venv_python}"'
+        else:
+            python_cmd = 'python'
+            self.log("Warning: venv not found, using system Python")
+        cmd = f'{python_cmd} run.py'
         self.backend_process = self._start_process(cmd, self.backend_dir, "Flask Backend")
         if self.backend_process:
             self.backend_pid = self.backend_process.pid
@@ -475,7 +491,7 @@ class CityWatcherControlPanel:
         if self.frontend_process and self.frontend_process.poll() is None:
             self.log("Frontend already running!")
             return
-        cmd = f'"{self.node_exe}" "{self.npm_cli}" run dev'
+        cmd = 'npm run dev'
         self.frontend_process = self._start_process(cmd, self.frontend_dir, "React Frontend")
         if self.frontend_process:
             self.frontend_pid = self.frontend_process.pid
@@ -551,7 +567,7 @@ class CityWatcherControlPanel:
             self.log("Installing frontend dependencies...")
             try:
                 result = subprocess.run(
-                    [self.node_exe, self.npm_cli, 'install'],
+                    ['npm', 'install'],
                     cwd=self.frontend_dir, capture_output=True, text=True, timeout=120)
                 self.log(result.stdout.strip() if result.stdout else "Done.")
             except Exception as e:
@@ -563,7 +579,7 @@ class CityWatcherControlPanel:
             self.log("Building frontend for production...")
             try:
                 result = subprocess.run(
-                    [self.node_exe, self.npm_cli, 'run', 'build'],
+                    ['npm', 'run', 'build'],
                     cwd=self.frontend_dir, capture_output=True, text=True, timeout=120)
                 self.log(result.stdout.strip() if result.stdout else "Build complete.")
                 if result.stderr:

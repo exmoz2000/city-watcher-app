@@ -2,6 +2,52 @@
 
 All notable changes to the CityWatcher project will be documented in this file.
 
+## [1.3.1] - 2026-02-27
+
+### Fixed - Mobile App Dependencies & Stability
+- **Critical Bug Fixes**
+  - Fixed missing npm dependencies causing app crashes
+  - Added @react-native-async-storage/async-storage for offline storage
+  - Added @react-native-community/netinfo for network detection
+  - Added axios for HTTP API requests
+  - Added expo-secure-store for secure token storage
+  - Added expo-notifications for push notifications
+  - Fixed syntax error in mappers.ts BackendReport interface (missing closing brace)
+  - Fixed AuthContext initialization hanging on Expo Go
+  - Removed blocking push notification calls that prevented app startup in Expo Go
+  - Fixed Flask backend to listen on all network interfaces (0.0.0.0) for mobile device connectivity
+
+- **Expo Go Compatibility**
+  - Disabled automatic update checks to prevent startup delays
+  - Made push notifications optional (gracefully skips in Expo Go)
+  - Added comprehensive console logging for debugging
+  - App now loads successfully in Expo Go development environment
+
+- **Network Configuration**
+  - Updated API base URL to use local IP address (192.168.101.108) for physical device testing
+  - Backend now accepts connections from local network devices
+  - Added clear instructions for switching between localhost (emulator) and IP address (physical device)
+
+- **Configuration Updates**
+  - Updated app.json with update settings (checkAutomatically: "ON_ERROR_RECOVERY")
+  - Simplified AuthContext to remove notification dependencies during init
+  - Added fallback error handling for all async operations
+  - Backend run.py now uses host='0.0.0.0' for network accessibility
+
+### Tested & Verified
+- ✅ App successfully loads in Expo Go on Android
+- ✅ Login/signup functionality working with backend API
+- ✅ Network connectivity between mobile device and backend server
+- ✅ All critical dependencies installed and functioning
+
+### Notes
+- Push notifications will work in standalone builds but are disabled in Expo Go
+- Backend API server must be running on host='0.0.0.0' for mobile device access
+- Update API base URL in src/services/api.ts when switching between emulator and physical device
+- All 6 missing dependencies now properly documented in package.json
+
+---
+
 ## [1.3.0] - 2026-02-26
 
 ### Added - Mobile API Integration (Backend)
