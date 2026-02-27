@@ -8,7 +8,7 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import MapView, { Circle } from 'react-native-maps';
+import MapView, { Heatmap } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -64,14 +64,12 @@ export default function HeatmapScreen() {
     mapRef.current?.animateToRegion(CAPE_TOWN_REGION, 500);
   };
 
-  // Get color and opacity based on weight for better heatmap effect
-  const getHeatmapStyle = (weight: number): { color: string; radius: number; opacity: number } => {
-    if (weight >= 8) return { color: '#D32F2F', radius: 200, opacity: 0.3 };
-    if (weight >= 6) return { color: '#F44336', radius: 150, opacity: 0.25 };
-    if (weight >= 4) return { color: '#FF5722', radius: 120, opacity: 0.2 };
-    if (weight >= 2) return { color: '#FF9800', radius: 100, opacity: 0.15 };
-    return { color: '#FFC107', radius: 80, opacity: 0.1 };
-  };
+  // Convert heatmap points to the format expected by Heatmap component
+  const heatmapData = heatmapPoints.map(point => ({
+    latitude: point.latitude,
+    longitude: point.longitude,
+    weight: point.weight / 10, // Normalize weight to 0-1 range
+  }));
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -138,21 +136,16 @@ export default function HeatmapScreen() {
           showsScale
           mapType="standard"
         >
-          {heatmapPoints.map((point, index) => {
-            const style = getHeatmapStyle(point.weight);
-            return (
-              <Circle
-                key={`heatpoint-${index}`}
-                center={{
-                  latitude: point.latitude,
-                  longitude: point.longitude,
-                }}
-                radius={style.radius}
-                fillColor={style.color + Math.round(style.opacity * 255).toString(16).padStart(2, '0')}
-                strokeWidth={0}
-              />
-            );
-          })}
+          <Heatmap
+            points={heatmapData}
+            radius={40}
+            opacity={0.7}
+            gradient={{
+              colors: ['#FFE082', '#FFB74D', '#FF8A65', '#EF5350', '#C62828'],
+              startPoints: [0.1, 0.25, 0.5, 0.75, 1.0],
+              colorMapSize: 256,
+            }}
+          />
         </MapView>
 
         {/* Legend overlay */}
