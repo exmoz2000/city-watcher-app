@@ -33,6 +33,14 @@ export default function Users() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
+  // Auto-refresh every 10 seconds to detect new users
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 10000); // 10 seconds
+    return () => clearInterval(interval);
+  }, [fetchUsers]);
+
   const openCreate = () => { setForm(emptyForm); setEditId(null); setDialogOpen(true); };
   const openEdit = (u) => {
     setForm({ email: u.email, first_name: u.first_name, last_name: u.last_name,

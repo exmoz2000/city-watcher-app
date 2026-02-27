@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 import { RootStackParamList } from '../types';
 import {
@@ -34,9 +36,29 @@ export default function ReportFormScreen({ route, navigation }: Props) {
   const { user } = useAuth();
 
   const [description, setDescription] = useState('');
-  const [hasPhoto, setHasPhoto] = useState(false);
   const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+
+  const handleTakePhoto = async () => {
+    // Request camera permissions
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Camera permission is needed to take photos.');
+      return;
+    }
+
+    // Launch camera
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -109,16 +131,19 @@ export default function ReportFormScreen({ route, navigation }: Props) {
       <Text style={styles.sectionLabel}>Photo</Text>
       <TouchableOpacity
         style={styles.photoButton}
-        onPress={() => setHasPhoto(true)}
+        onPress={handleTakePhoto}
       >
-        {hasPhoto ? (
-          <View style={styles.photoPlaceholder}>
-            <MaterialCommunityIcons
-              name="check-circle"
-              size={40}
-              color={Colors.successGreen}
-            />
-            <Text style={styles.photoText}>Photo captured</Text>
+        {photoUri ? (
+          <View style={styles.photoContainer}>
+            <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+            <View style={styles.photoOverlay}>
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={32}
+                color={Colors.successGreen}
+              />
+              <Text style={styles.photoSuccessText}>Photo captured</Text>
+            </View>
           </View>
         ) : (
           <View style={styles.photoPlaceholder}>
@@ -253,6 +278,32 @@ const styles = StyleSheet.create({
   },
   photoPlaceholder: {
     alignItems: 'center',
+  },
+  photoContainer: {
+    width: '100%',
+    position: 'relative',
+  },
+  photoPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: BorderRadius.card,
+  },
+  photoOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: BorderRadius.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoSuccessText: {
+    fontSize: Fonts.sizes.md,
+    fontWeight: Fonts.weights.semiBold,
+    color: Colors.textWhite,
+    marginTop: Spacing.sm,
   },
   photoText: {
     fontSize: Fonts.sizes.md,
