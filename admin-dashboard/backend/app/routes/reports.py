@@ -335,5 +335,22 @@ def get_stats():
 @jwt_required()
 def serve_attachment(filepath):
     """Serve uploaded report attachments"""
-    upload_base = current_app.config.get("UPLOAD_FOLDER", "uploads")
-    return send_from_directory(upload_base, filepath)
+    # filepath already contains the full relative path like "uploads/reports/153/file.jpg"
+    # We need to serve from the project root, not from uploads folder
+    import os
+    from pathlib import Path
+    
+    # Get the absolute path to the backend directory
+    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    # Normalize the filepath (convert backslashes to forward slashes)
+    filepath = filepath.replace('\\', '/')
+    
+    # Split into directory and filename
+    file_dir = os.path.dirname(filepath)
+    filename = os.path.basename(filepath)
+    
+    # Construct the full directory path
+    full_dir = os.path.join(backend_dir, file_dir)
+    
+    return send_from_directory(full_dir, filename)
