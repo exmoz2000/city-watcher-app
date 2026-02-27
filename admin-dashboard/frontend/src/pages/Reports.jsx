@@ -264,7 +264,19 @@ export default function Reports() {
                       value={r.status}
                       onChange={(e) => handleStatusChange(r.id, e.target.value, e)}
                       size="small"
-                      sx={{ minWidth: 140 }}
+                      sx={{
+                        minWidth: 140,
+                        bgcolor: r.status === 'received' ? '#FFA726' :
+                                 r.status === 'under_review' ? '#42A5F5' :
+                                 r.status === 'crew_dispatched' ? '#AB47BC' :
+                                 r.status === 'in_progress' ? '#FFCA28' :
+                                 r.status === 'resolved' ? '#66BB6A' :
+                                 r.status === 'closed' ? '#78909C' : 'transparent',
+                        color: 'white',
+                        fontWeight: 600,
+                        '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        '& .MuiSvgIcon-root': { color: 'white' }
+                      }}
                     >
                       {ALL_STATUSES.map((s) => (
                         <MenuItem key={s} value={s}>{s.replace('_', ' ')}</MenuItem>
@@ -276,7 +288,17 @@ export default function Reports() {
                       value={r.priority}
                       onChange={(e) => handlePriorityChange(r.id, e.target.value, e)}
                       size="small"
-                      sx={{ minWidth: 100 }}
+                      sx={{
+                        minWidth: 100,
+                        bgcolor: r.priority === 'critical' ? '#EF5350' :
+                                 r.priority === 'high' ? '#FF9800' :
+                                 r.priority === 'medium' ? '#FDD835' :
+                                 r.priority === 'low' ? '#66BB6A' : 'transparent',
+                        color: r.priority === 'medium' ? '#000' : 'white',
+                        fontWeight: 600,
+                        '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                        '& .MuiSvgIcon-root': { color: r.priority === 'medium' ? '#000' : 'white' }
+                      }}
                     >
                       {ALL_PRIORITIES.map((p) => (
                         <MenuItem key={p} value={p}>{p}</MenuItem>
