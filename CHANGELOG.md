@@ -2,6 +2,36 @@
 
 All notable changes to the CityWatcher project will be documented in this file.
 
+## [1.3.3] - 2026-02-27
+
+### Fixed - Admin Dashboard Image Display
+
+- **Image Loading Hotfix**
+  - Fixed 404 error when loading report attachment images
+  - Corrected file path handling in `/api/reports/attachments/<path>` endpoint
+  - Backend now properly parses database file paths (e.g., `uploads/reports/153/file.jpg`)
+  - Handles both forward slashes and backslashes for Windows/Linux compatibility
+  - Splits filepath into directory and filename for `send_from_directory`
+  - Serves files from backend root directory where uploads folder exists
+
+- **Enhanced Image Gallery UI**
+  - Redesigned photo gallery with prominent dark theme display
+  - Responsive grid layout (auto-fill, minimum 200px per image)
+  - Added full-screen image modal dialog with close button
+  - Implemented secure blob-based image loading with JWT authentication
+  - Loading spinners while images fetch
+  - Hover effects with orange border, scale animation, and shadow
+  - Click any thumbnail to view full size
+  - Proper cleanup of blob URLs on component unmount
+
+### Technical Details
+- Images now fetched as authenticated blobs via axios
+- Blob URLs created from responses to bypass CORS/auth issues with `<img>` tags
+- Backend serves files from correct directory structure
+- Cross-platform path handling (Windows backslashes, Linux forward slashes)
+
+---
+
 ## [1.3.2] - 2026-02-27
 
 ### Fixed - Admin Dashboard & Mobile App UX
@@ -296,7 +326,7 @@ All notable changes to the CityWatcher project will be documented in this file.
 
 ## Project Information
 
-**Version**: 1.3.2
+**Version**: 1.3.3
 **Platform**: React Native (iOS, Android, Web) + Web Admin Dashboard
 **Framework**: Expo (mobile), Flask + React (admin)
 **Language**: TypeScript (mobile), Python + JavaScript (admin)
