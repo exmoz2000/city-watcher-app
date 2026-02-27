@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList, AlertSeverity, CommunityAlert } from '../types';
 import {
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AlertDetail'>;
 
 export default function AlertDetailScreen({ route }: Props) {
   const { alertId } = route.params;
+  const insets = useSafeAreaInsets();
   const [alert, setAlert] = useState<CommunityAlert | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -63,7 +65,7 @@ export default function AlertDetailScreen({ route }: Props) {
   const sv = severityColors[alert.severity];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xxl }}>
       {/* Severity Banner */}
       <View style={[styles.severityBanner, { backgroundColor: sv.bg }]}>
         <MaterialCommunityIcons

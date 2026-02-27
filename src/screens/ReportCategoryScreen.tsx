@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { RootStackParamList, ReportCategory } from '../types';
 import {
@@ -81,6 +82,8 @@ const categories: CategoryOption[] = [
 ];
 
 export default function ReportCategoryScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
+  
   const handleSelect = (category: ReportCategory) => {
     navigation.navigate('ReportForm', { category });
   };
@@ -88,7 +91,7 @@ export default function ReportCategoryScreen({ navigation }: Props) {
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + Spacing.xxl }]}
     >
       <Text style={styles.instruction}>
         Select the type of issue you want to report
