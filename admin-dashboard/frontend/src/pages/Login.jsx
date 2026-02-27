@@ -69,10 +69,6 @@ export default function Login() {
             {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
           </Button>
         </form>
-
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 2, textAlign: 'center' }}>
-          Demo: admin@citywatcher.co.za / admin123
-        </Typography>
       </Card>
     </Box>
   );
