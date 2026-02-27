@@ -3,17 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TablePagination, TextField, Select, MenuItem, FormControl, InputLabel, Typography,
-  IconButton, InputAdornment, Grid, Checkbox, Button, Toolbar, Snackbar, Alert,
+  IconButton, InputAdornment, Grid, Checkbox, Button, Toolbar, Snackbar, Alert, Chip,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { StatusBadge, PriorityBadge, CATEGORY_LABELS } from '../components/StatusBadge';
 import api from '../services/api';
 
 const STATUSES = ['', 'received', 'under_review', 'crew_dispatched', 'in_progress', 'resolved', 'closed'];
 const CATEGORIES = ['', 'pothole', 'water_leak', 'power_outage', 'traffic_light', 'street_light', 'garbage', 'other'];
 const PRIORITIES = ['', 'low', 'medium', 'high', 'critical'];
+const ALL_STATUSES = ['received', 'under_review', 'crew_dispatched', 'in_progress', 'resolved', 'closed'];
+const ALL_PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 export default function Reports() {
   const navigate = useNavigate();
@@ -51,6 +54,28 @@ export default function Reports() {
 
   const handleSelect = (id) => {
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  };
+
+  const handleStatusChange = async (reportId, newStatus, e) => {
+    e.stopPropagation();
+    try {
+      await api.patch(`/reports/${reportId}/status`, { status: newStatus });
+      setToast({ open: true, message: 'Status updated', severity: 'success' });
+      fetchReports();
+    } catch {
+      setToast({ open: true, message: 'Failed to update status', severity: 'error' });
+    }
+  };
+
+  const handlePriorityChange = async (reportId, newPriority, e) => {
+    e.stopPropagation();
+    try {
+      await api.put(`/reports/${reportId}`, { priority: newPriority });
+      setToast({ open: true, message: 'Priority updated', severity: 'success' });
+      fetchReports();
+    } catch {
+      setToast({ open: true, message: 'Failed to update priority', severity: 'error' });
+    }
   };
 
   const handleBulkApply = async () => {
@@ -200,45 +225,70 @@ export default function Reports() {
             </TableHead>
             <TableBody>
               {reports.map((r) => (
-                <TableRow key={r.id} hover sx={{ cursor: 'pointer' }}
-                  selected={selected.includes(r.id)}
-                  onClick={() => navigate(`/reports/${r.id}`)}>
+                <TableRow key={r.id} hover
+                  selected={selected.includes(r.id)}>
                   <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
                     <Checkbox checked={selected.includes(r.id)} onChange={() => handleSelect(r.id)} />
                   </TableCell>
-                  <TableCell><Typography variant="body2" fontWeight={600}>{r.report_number}</Typography></TableCell>
+                  <TableCell>
+                    <Typography variant="body2" fontWeight={600}>{r.report_number}</Typography>
+                  </TableCell>
                   <TableCell>
                     {r.attachment_count > 0 ? (
-                      <Box
+                      <Chip
+                        icon={<CheckCircleIcon />}
+                        label="Yes"
+                        size="small"
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: 'primary.light',
-                          borderRadius: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.75rem',
+                          bgcolor: 'success.main',
+                          color: 'white',
                           fontWeight: 600,
-                          color: 'primary.main'
+                          '& .MuiChip-icon': { color: 'white' }
                         }}
-                      >
-                        {r.attachment_count}
-                      </Box>
+                      />
                     ) : (
-                      <Typography variant="caption" color="text.secondary">—</Typography>
+                      <Chip
+                        label="No"
+                        size="small"
+                        variant="outlined"
+                        sx={{ color: 'text.secondary', borderColor: 'text.secondary' }}
+                      />
                     )}
                   </TableCell>
                   <TableCell>{CATEGORY_LABELS[r.category] || r.category}</TableCell>
                   <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {r.location_address}
                   </TableCell>
-                  <TableCell><StatusBadge status={r.status} /></TableCell>
-                  <TableCell><PriorityBadge priority={r.priority} /></TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={r.status}
+                      onChange={(e) => handleStatusChange(r.id, e.target.value, e)}
+                      size="small"
+                      sx={{ minWidth: 140 }}
+                    >
+                      {ALL_STATUSES.map((s) => (
+                        <MenuItem key={s} value={s}>{s.replace('_', ' ')}</MenuItem>
+                      ))}
+                    </Select>
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select
+                      value={r.priority}
+                      onChange={(e) => handlePriorityChange(r.id, e.target.value, e)}
+                      size="small"
+                      sx={{ minWidth: 100 }}
+                    >
+                      {ALL_PRIORITIES.map((p) => (
+                        <MenuItem key={p} value={p}>{p}</MenuItem>
+                      ))}
+                    </Select>
+                  </TableCell>
                   <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>{r.assignee_name || '—'}</TableCell>
                   <TableCell align="center">
-                    <IconButton size="small"><VisibilityIcon fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => navigate(`/reports/${r.id}`)}>
+                      <VisibilityIcon fontSize="small" />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))}
