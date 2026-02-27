@@ -22,9 +22,9 @@ export default function Dashboard() {
   const [activity, setActivity] = useState([]);
 
   useEffect(() => {
-    api.get('/dashboard/metrics').then((r) => setMetrics(r.data));
-    api.get('/dashboard/charts').then((r) => setCharts(r.data));
-    api.get('/dashboard/recent-activity').then((r) => setActivity(r.data));
+    api.get('/dashboard/metrics').then((r) => setMetrics(r.data)).catch(console.error);
+    api.get('/dashboard/charts').then((r) => setCharts(r.data)).catch(console.error);
+    api.get('/dashboard/recent-activity').then((r) => setActivity(Array.isArray(r.data) ? r.data : [])).catch(console.error);
   }, []);
 
   if (!metrics) return <Typography>Loading...</Typography>;
