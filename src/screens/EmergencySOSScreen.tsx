@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 
 import { RootStackParamList, EmergencyServiceType } from '../types';
 import {
@@ -58,6 +60,49 @@ export default function EmergencySOSScreen({ navigation }: Props) {
   const [activating, setActivating] = useState<EmergencyServiceType | null>(
     null
   );
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [locationAddress, setLocationAddress] = useState<string>('Fetching location...');
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationError('Location permission denied');
+          setLocationAddress('Location permission required');
+          return;
+        }
+
+        const currentLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        setLocation(currentLocation);
+
+        // Reverse geocode to get address
+        const addresses = await Location.reverseGeocodeAsync({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+        });
+
+        if (addresses && addresses.length > 0) {
+          const addr = addresses[0];
+          const addressParts = [
+            addr.street,
+            addr.subregion || addr.district,
+            addr.city,
+          ].filter(Boolean);
+          setLocationAddress(addressParts.join(', ') || 'Address unavailable');
+        } else {
+          setLocationAddress('Address unavailable');
+        }
+      } catch (error) {
+        console.error('Error getting location:', error);
+        setLocationError('Unable to get location');
+        setLocationAddress('Location unavailable');
+      }
+    })();
+  }, []);
 
   const handleEmergency = (option: EmergencyOption) => {
     Alert.alert(
@@ -119,16 +164,25 @@ export default function EmergencySOSScreen({ navigation }: Props) {
         <MaterialCommunityIcons
           name="crosshairs-gps"
           size={24}
-          color={Colors.successGreen}
+          color={locationError ? Colors.emergencyRed : Colors.successGreen}
         />
         <View style={styles.locationInfo}>
-          <Text style={styles.locationLabel}>Your Current Location</Text>
-          <Text style={styles.locationAddress}>
-            Main Road, Observatory, Cape Town
-          </Text>
-          <Text style={styles.locationCoords}>
-            -33.9249, 18.4241 · GPS Active
-          </Text>
+          <Text style={styles.locationLabel}>YOUR CURRENT LOCATION</Text>
+          {location ? (
+            <>
+              <Text style={styles.locationAddress}>{locationAddress}</Text>
+              <Text style={styles.locationCoords}>
+                {location.coords.latitude.toFixed(4)}, {location.coords.longitude.toFixed(4)} · GPS Active
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.locationAddress}>{locationAddress}</Text>
+              {!locationError && (
+                <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 4 }} />
+              )}
+            </>
+          )}
         </View>
       </View>
 
