@@ -18,8 +18,8 @@ import {
 // --- Configuration ---
 // PRODUCTION: Use ngrok tunnel URL for remote testing
 // DEVELOPMENT: Use local IP when testing on same network
-const BASE_URL = 'https://studiously-sphereless-concetta.ngrok-free.dev/api';
-// const BASE_URL = 'http://192.168.101.108:5000/api'; // Local network testing
+// const BASE_URL = 'https://studiously-sphereless-concetta.ngrok-free.dev/api';
+const BASE_URL = 'http://192.168.1.105:5000/api'; // Local network testing
 // const BASE_URL = 'http://localhost:5000/api'; // Emulator testing
 const TOKEN_KEY = 'auth_token';
 
@@ -240,6 +240,65 @@ export async function removeDeviceToken(token: string): Promise<void> {
   await apiClient.delete('/mobile/device-tokens', {
     data: { expo_push_token: token },
   });
+}
+
+export interface NotificationPreferences {
+  statusChangeEnabled: boolean;
+  assignmentEnabled: boolean;
+}
+
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  const { data } = await apiClient.get('/notifications/preferences');
+  return {
+    statusChangeEnabled: data.status_change_enabled ?? true,
+    assignmentEnabled: data.assignment_enabled ?? true,
+  };
+}
+
+export async function updateNotificationPreferences(
+  prefs: NotificationPreferences
+): Promise<NotificationPreferences> {
+  const { data } = await apiClient.put('/notifications/preferences', {
+    status_change_enabled: prefs.statusChangeEnabled,
+    assignment_enabled: prefs.assignmentEnabled,
+  });
+  return {
+    statusChangeEnabled: data.status_change_enabled,
+    assignmentEnabled: data.assignment_enabled,
+  };
+}
+
+export interface NotificationHistoryItem {
+  id: number;
+  reportId: number;
+  notificationType: string;
+  title: string;
+  body: string;
+  status: string;
+  sentAt: string;
+}
+
+export async function getNotificationHistory(
+  page = 1,
+  limit = 50
+): Promise<{ notifications: NotificationHistoryItem[]; total: number; page: number; pages: number }> {
+  const { data } = await apiClient.get('/notifications/history', {
+    params: { page, limit },
+  });
+  return {
+    notifications: data.notifications.map((n: any) => ({
+      id: n.id,
+      reportId: n.report_id,
+      notificationType: n.notification_type,
+      title: n.title,
+      body: n.body,
+      status: n.status,
+      sentAt: n.sent_at,
+    })),
+    total: data.total,
+    page: data.page,
+    pages: data.pages,
+  };
 }
 
 export async function logout(): Promise<void> {

@@ -2,11 +2,17 @@
   "expo": {
     "name": "CityWatcher",
     "slug": "citywatcher",
+    "owner": "citywatcher",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    },
     "updates": {
       "enabled": false,
       "checkAutomatically": "ON_ERROR_RECOVERY",

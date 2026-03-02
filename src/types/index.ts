@@ -216,6 +216,8 @@ export type RootStackParamList = {
   ReportDetail: { reportId: string };
   AlertDetail: { alertId: string };
   Heatmap: undefined;
+  NotificationPreferences: undefined;
+  NotificationHistory: undefined;
 };
 
 export type BottomTabParamList = {

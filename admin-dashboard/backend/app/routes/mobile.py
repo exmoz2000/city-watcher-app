@@ -12,8 +12,11 @@ from app.models.device_token import DeviceToken
 from app.models.report import Report
 from app.models.report_sub import ReportAttachment
 from app.models.user import User
+from app.services.token_manager import TokenManager
 
 mobile_bp = Blueprint("mobile", __name__)
+token_manager = TokenManager()
+
 
 
 def _haversine_distance(lat1, lon1, lat2, lon2):
@@ -78,38 +81,64 @@ def update_profile():
 @mobile_bp.route("/device-tokens", methods=["POST"])
 @jwt_required()
 def register_device_token():
+    """Register or update a push notification token."""
     user_id = int(get_jwt_identity())
     data = request.get_json()
 
-    expo_push_token = data.get("expo_push_token")
-    platform = data.get("platform")
+    expo_push_token = data.get("expo_push_token") or data.get("token")
+    platform = data.get("platform") or data.get("device_type", "ios")
+    device_name = data.get("device_name")
 
     if not expo_push_token or not platform:
         return jsonify({"error": "expo_push_token and platform are required"}), 400
 
-    existing = DeviceToken.query.filter_by(
-        user_id=user_id, expo_push_token=expo_push_token
-    ).first()
+    try:
+        token = token_manager.register_token(
+            user_id=user_id,
+            token=expo_push_token,
+            platform=platform,
+            device_name=device_name
+        )
+        return jsonify(token.to_dict()), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Failed to register token"}), 500
 
-    if existing:
-        if not existing.is_active:
-            existing.is_active = True
-            db.session.commit()
-        return jsonify(existing.to_dict()), 200
 
-    token = DeviceToken(
-        user_id=user_id,
-        expo_push_token=expo_push_token,
-        platform=platform,
-    )
-    db.session.add(token)
-    db.session.commit()
-    return jsonify(token.to_dict()), 201
+@mobile_bp.route("/device-tokens", methods=["GET"])
+@jwt_required()
+def get_device_tokens():
+    """Get all active device tokens for the current user."""
+    user_id = int(get_jwt_identity())
+    
+    try:
+        tokens = token_manager.get_active_tokens(user_id)
+        return jsonify({"tokens": [token.to_dict() for token in tokens]}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to retrieve tokens"}), 500
+
+
+@mobile_bp.route("/device-tokens/<token>", methods=["DELETE"])
+@jwt_required()
+def delete_device_token(token):
+    """Remove a device token (on logout)."""
+    user_id = int(get_jwt_identity())
+    
+    try:
+        success = token_manager.remove_token(token, user_id)
+        if success:
+            return jsonify({"message": "Token removed"}), 204
+        else:
+            return jsonify({"error": "Token not found"}), 404
+    except Exception as e:
+        return jsonify({"error": "Failed to remove token"}), 500
 
 
 @mobile_bp.route("/device-tokens", methods=["DELETE"])
 @jwt_required()
 def deactivate_device_token():
+    """Deactivate a device token (legacy endpoint for backward compatibility)."""
     user_id = int(get_jwt_identity())
     data = request.get_json()
 
@@ -117,15 +146,11 @@ def deactivate_device_token():
     if not expo_push_token:
         return jsonify({"error": "expo_push_token is required"}), 400
 
-    token = DeviceToken.query.filter_by(
-        user_id=user_id, expo_push_token=expo_push_token
-    ).first()
-
-    if token:
-        token.is_active = False
-        db.session.commit()
-
-    return jsonify({"message": "Device token deactivated"}), 200
+    try:
+        success = token_manager.remove_token(expo_push_token, user_id)
+        return jsonify({"message": "Device token deactivated"}), 200
+    except Exception as e:
+        return jsonify({"error": "Failed to deactivate token"}), 500
 
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png"}

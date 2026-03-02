@@ -263,6 +263,38 @@ export default function ProfileScreen() {
       {/* Menu Items */}
       <View style={styles.section}>
         <View style={styles.menuCard}>
+          <TouchableOpacity 
+            style={styles.menuRow}
+            onPress={() => navigation.navigate('NotificationPreferences')}
+          >
+            <MaterialCommunityIcons
+              name="bell-cog-outline"
+              size={20}
+              color={Colors.textPrimary}
+            />
+            <Text style={styles.menuLabel}>Notification Preferences</Text>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={Colors.textSecondary}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuRow}
+            onPress={() => navigation.navigate('NotificationHistory')}
+          >
+            <MaterialCommunityIcons
+              name="bell-outline"
+              size={20}
+              color={Colors.textPrimary}
+            />
+            <Text style={styles.menuLabel}>Notification History</Text>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={20}
+              color={Colors.textSecondary}
+            />
+          </TouchableOpacity>
           {[
             { icon: 'help-circle-outline', label: 'Help & Support' },
             { icon: 'shield-lock-outline', label: 'Privacy Policy' },

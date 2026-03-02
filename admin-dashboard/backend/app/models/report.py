@@ -25,6 +25,7 @@ class Report(db.Model):
     citizen_name = db.Column(db.String(200))
     citizen_phone = db.Column(db.String(20))
     citizen_email = db.Column(db.String(255))
+    submitter_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     assigned_to = db.Column(db.Integer, db.ForeignKey("users.id"))
     municipality_id = db.Column(db.Integer, db.ForeignKey("municipalities.id"))
     created_at = db.Column(

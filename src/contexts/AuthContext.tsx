@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { User } from '../types';
 import * as api from '../services/api';
 import { RegisterRequest } from '../services/api';
+import NotificationManager from '../services/NotificationManager';
 
 // --- Context Shape ---
 interface AuthContextValue {
@@ -74,15 +75,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const result = await api.login(email, password);
     setToken(result.token);
     setUser(result.user);
+    
+    // Register for push notifications after successful login
+    try {
+      await NotificationManager.registerForPushNotifications();
+    } catch (error) {
+      console.error('[AuthContext] Failed to register for push notifications:', error);
+    }
   }, []);
 
   const register = useCallback(async (data: RegisterRequest) => {
     const result = await api.register(data);
     setToken(result.token);
     setUser(result.user);
+    
+    // Register for push notifications after successful registration
+    try {
+      await NotificationManager.registerForPushNotifications();
+    } catch (error) {
+      console.error('[AuthContext] Failed to register for push notifications:', error);
+    }
   }, []);
 
   const logout = useCallback(async () => {
+    // Remove push token before logout
+    try {
+      await NotificationManager.removePushToken();
+    } catch (error) {
+      console.error('[AuthContext] Failed to remove push token:', error);
+    }
+    
     await api.logout();
     setUser(null);
     setToken(null);

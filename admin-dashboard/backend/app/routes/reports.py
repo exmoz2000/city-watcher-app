@@ -8,10 +8,12 @@ from app.models.user import User
 from app.middleware.municipality_scope import scope_query, role_required
 from app.services.sla_engine import calculate_sla_deadline
 from app.services.export_service import generate_csv
+from app.services.notification_service import NotificationService
 from datetime import datetime, timezone
 import os
 
 reports_bp = Blueprint("reports", __name__)
+notification_service = NotificationService()
 
 
 @reports_bp.route("", methods=["GET"])
@@ -131,6 +133,18 @@ def bulk_action():
                 new_value=str(value),
             )
             db.session.add(history)
+            
+            # Send push notification for status change
+            try:
+                notification_service.send_status_change_notification(
+                    report_id=report.id,
+                    old_status=old_value,
+                    new_status=value
+                )
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to send status change notification for report {report.id}: {str(e)}")
+                
         elif action == "assign":
             old_value = report.assigned_to
             report.assigned_to = int(value)
@@ -150,6 +164,18 @@ def bulk_action():
                 link=f"/reports/{report.id}",
             )
             db.session.add(notification)
+            
+            # Send push notification for assignment
+            try:
+                assignee = User.query.get(int(value))
+                admin_name = f"{assignee.first_name} {assignee.last_name}" if assignee else "a team member"
+                notification_service.send_assignment_notification(
+                    report_id=report.id,
+                    admin_name=admin_name
+                )
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to send assignment notification for report {report.id}: {str(e)}")
 
         updated.append(report.to_dict())
 
@@ -191,6 +217,7 @@ def create_report():
         citizen_name=data.get("citizen_name"),
         citizen_phone=data.get("citizen_phone"),
         citizen_email=data.get("citizen_email"),
+        submitter_id=int(user_id),
         municipality_id=data.get("municipality_id"),
     )
     db.session.add(report)
@@ -253,6 +280,21 @@ def update_status(report_id):
     db.session.add(history)
     db.session.commit()
 
+    # Send push notification for status change
+    try:
+        print(f"[NOTIFICATION] Attempting to send status change notification for report {report_id}")
+        result = notification_service.send_status_change_notification(
+            report_id=report.id,
+            old_status=old_status,
+            new_status=new_status
+        )
+        print(f"[NOTIFICATION] Result: {result}")
+    except Exception as e:
+        # Log error but don't fail the status update
+        import logging
+        logging.error(f"Failed to send status change notification: {str(e)}")
+        print(f"[NOTIFICATION] Error: {str(e)}")
+
     return jsonify(report.to_dict()), 200
 
 
@@ -287,6 +329,21 @@ def assign_report(report_id):
         db.session.add(notification)
 
     db.session.commit()
+
+    # Send push notification for assignment
+    if assignee_id:
+        try:
+            assignee = User.query.get(assignee_id)
+            admin_name = f"{assignee.first_name} {assignee.last_name}" if assignee else "a team member"
+            notification_service.send_assignment_notification(
+                report_id=report.id,
+                admin_name=admin_name
+            )
+        except Exception as e:
+            # Log error but don't fail the assignment
+            import logging
+            logging.error(f"Failed to send assignment notification: {str(e)}")
+
     return jsonify(report.to_dict()), 200
 
 

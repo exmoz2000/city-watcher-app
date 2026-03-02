@@ -23,6 +23,8 @@ import EmergencySOSScreen from '../screens/EmergencySOSScreen';
 import ReportDetailScreen from '../screens/ReportDetailScreen';
 import AlertDetailScreen from '../screens/AlertDetailScreen';
 import HeatmapScreen from '../screens/HeatmapScreen';
+import NotificationPreferencesScreen from '../screens/NotificationPreferencesScreen';
+import NotificationHistoryScreen from '../screens/NotificationHistoryScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -172,6 +174,16 @@ export default function AppNavigator() {
             <Stack.Screen
               name="Heatmap"
               component={HeatmapScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="NotificationPreferences"
+              component={NotificationPreferencesScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="NotificationHistory"
+              component={NotificationHistoryScreen}
               options={{ headerShown: false }}
             />
           </>
