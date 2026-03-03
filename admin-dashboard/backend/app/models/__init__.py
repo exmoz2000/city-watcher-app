@@ -7,6 +7,7 @@ from app.models.notification_preference import NotificationPreference
 from app.models.sla import SLAConfig, SLATracking
 from app.models.device_token import DeviceToken
 from app.models.community_alert import CommunityAlert
+from app.models.social_auth_provider import SocialAuthProvider
 
 __all__ = [
     "User",
@@ -21,4 +22,5 @@ __all__ = [
     "SLATracking",
     "DeviceToken",
     "CommunityAlert",
+    "SocialAuthProvider",
 ]

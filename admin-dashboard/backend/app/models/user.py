@@ -11,7 +11,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)  # Nullable for social-only accounts
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
     role = db.Column(
@@ -43,6 +43,14 @@ class User(db.Model):
             password.encode("utf-8"), self.password_hash.encode("utf-8")
         )
 
+    def has_password(self):
+        """Check if user has password authentication enabled."""
+        return self.password_hash is not None
+
+    def get_linked_providers(self):
+        """Get list of linked social providers."""
+        return [auth.provider for auth in self.social_auth_providers]
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -57,4 +65,6 @@ class User(db.Model):
             "is_active": self.is_active,
             "last_login": self.last_login.isoformat() if self.last_login else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
+            "has_password": self.has_password(),
+            "linked_providers": self.get_linked_providers(),
         }

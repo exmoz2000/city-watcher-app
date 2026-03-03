@@ -40,8 +40,10 @@ def create_app():
     from app.routes.notifications import notifications_bp
     from app.routes.sla import sla_bp
     from app.routes.mobile import mobile_bp
+    from app.routes.social_auth import social_auth_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(social_auth_bp, url_prefix="/api")
     app.register_blueprint(reports_bp, url_prefix="/api/reports")
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(dashboard_bp, url_prefix="/api/dashboard")
